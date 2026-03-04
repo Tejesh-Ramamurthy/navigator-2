@@ -60,37 +60,6 @@
       color: rgba(255, 255, 255, 0.7);
     }
 
-    /* ─── iOS Compass Permission Button ─── */
-    .compass-permission-btn {
-      position: fixed;
-      bottom: 100px;
-      left: 50%;
-      transform: translateX(-50%);
-      z-index: 90;
-      background: #f59e0b;
-      border: none;
-      color: #0a0a0a;
-      font-family: 'Space Mono', monospace;
-      font-size: 13px;
-      font-weight: 700;
-      padding: 12px 24px;
-      border-radius: 8px;
-      cursor: pointer;
-      letter-spacing: 0.5px;
-      text-transform: uppercase;
-      display: none;
-    }
-
-    .compass-permission-btn.visible {
-      display: block;
-      animation: pulse-glow 2s ease-in-out infinite;
-    }
-
-    @keyframes pulse-glow {
-      0%, 100% { box-shadow: 0 0 10px rgba(245, 158, 11, 0.3); }
-      50% { box-shadow: 0 0 25px rgba(245, 158, 11, 0.6); }
-    }
-
     /* ─── Navigation Screen ─── */
     .nav-screen {
       display: flex;
@@ -144,8 +113,9 @@
       animation: arrow-pulse 2.5s ease-in-out infinite;
     }
 
-    .arrow-container.arrived svg {
-      filter: drop-shadow(0 0 18px rgba(34, 197, 94, 0.5));
+    .arrow-container.calibrating svg {
+      filter: drop-shadow(0 0 8px rgba(245, 158, 11, 0.2));
+      opacity: 0.5;
     }
 
     @keyframes arrow-pulse {
@@ -408,35 +378,23 @@
   <!-- Admin Button -->
   <button class="admin-btn" id="adminBtn">Admin</button>
 
-  <!-- iOS Compass Permission -->
-  <button class="compass-permission-btn" id="compassPermBtn">Enable Compass</button>
-
   <!-- Navigation Screen -->
   <div class="nav-screen" id="navScreen">
     <!-- Compass + Arrow -->
     <div class="compass-container">
-      <!-- Compass Ring (fixed, does not rotate) -->
+      <!-- Compass Ring (minimal, no cardinal labels) -->
       <div class="compass-ring">
         <svg viewBox="0 0 300 300" fill="none">
           <!-- Outer ring -->
           <circle cx="150" cy="150" r="145" stroke="rgba(255,255,255,0.08)" stroke-width="1"/>
-          <!-- Tick marks -->
-          <!-- N -->
-          <line x1="150" y1="10" x2="150" y2="26" stroke="rgba(255,255,255,0.35)" stroke-width="2"/>
-          <text x="150" y="42" text-anchor="middle" fill="rgba(255,255,255,0.3)" font-family="Space Mono, monospace" font-size="11" font-weight="700">N</text>
-          <!-- E -->
-          <line x1="290" y1="150" x2="274" y2="150" stroke="rgba(255,255,255,0.2)" stroke-width="1.5"/>
-          <text x="264" y="154" text-anchor="middle" fill="rgba(255,255,255,0.18)" font-family="Space Mono, monospace" font-size="10">E</text>
-          <!-- S -->
-          <line x1="150" y1="290" x2="150" y2="274" stroke="rgba(255,255,255,0.2)" stroke-width="1.5"/>
-          <text x="150" y="270" text-anchor="middle" fill="rgba(255,255,255,0.18)" font-family="Space Mono, monospace" font-size="10">S</text>
-          <!-- W -->
-          <line x1="10" y1="150" x2="26" y2="150" stroke="rgba(255,255,255,0.2)" stroke-width="1.5"/>
-          <text x="36" y="154" text-anchor="middle" fill="rgba(255,255,255,0.18)" font-family="Space Mono, monospace" font-size="10">W</text>
-          <!-- Minor ticks (every 30°) -->
+          <!-- Tick marks (every 30°, purely decorative) -->
+          <line x1="150" y1="10" x2="150" y2="26" stroke="rgba(255,255,255,0.15)" stroke-width="1.5"/>
           <line x1="225" y1="19.8" x2="220.2" y2="28.1" stroke="rgba(255,255,255,0.07)" stroke-width="1"/>
+          <line x1="290" y1="150" x2="274" y2="150" stroke="rgba(255,255,255,0.15)" stroke-width="1.5"/>
           <line x1="280.2" y1="75" x2="271.9" y2="79.8" stroke="rgba(255,255,255,0.07)" stroke-width="1"/>
+          <line x1="150" y1="290" x2="150" y2="274" stroke="rgba(255,255,255,0.15)" stroke-width="1.5"/>
           <line x1="280.2" y1="225" x2="271.9" y2="220.2" stroke="rgba(255,255,255,0.07)" stroke-width="1"/>
+          <line x1="10" y1="150" x2="26" y2="150" stroke="rgba(255,255,255,0.15)" stroke-width="1.5"/>
           <line x1="225" y1="280.2" x2="220.2" y2="271.9" stroke="rgba(255,255,255,0.07)" stroke-width="1"/>
           <line x1="75" y1="280.2" x2="79.8" y2="271.9" stroke="rgba(255,255,255,0.07)" stroke-width="1"/>
           <line x1="19.8" y1="225" x2="28.1" y2="220.2" stroke="rgba(255,255,255,0.07)" stroke-width="1"/>
@@ -518,20 +476,24 @@
     let userLng = null;
     let destLat = null;
     let destLng = null;
-    let compassHeading = 0;
     let currentBearing = 0;
     let currentDistance = Infinity;
     let smoothedAngle = 0;
     let hasGPS = false;
-    let hasCompass = false;
     let gpsWatchId = null;
 
-    const SMOOTH = 0.15;
+    // Movement-based heading state
+    let prevLat = null;
+    let prevLng = null;
+    let travelHeading = null; // null = not yet calibrated
+    const MIN_MOVE_METERS = 3; // minimum movement to update heading (filters GPS jitter)
+    const HEADING_SMOOTH = 0.3; // smoothing for travel heading changes
+
+    const ARROW_SMOOTH = 0.2;
     const ARRIVED_THRESHOLD = 10; // meters
 
     // ─── DOM Refs ───
     const arrowContainer = document.getElementById('arrowContainer');
-    const arrowSvg = document.getElementById('arrowSvg');
     const arrivedIcon = document.getElementById('arrivedIcon');
     const distanceValue = document.getElementById('distanceValue');
     const distanceUnit = document.getElementById('distanceUnit');
@@ -546,8 +508,6 @@
     const saveDestBtn = document.getElementById('saveDestBtn');
     const adminFeedback = document.getElementById('adminFeedback');
     const currentDestValue = document.getElementById('currentDestValue');
-    const compassPermBtn = document.getElementById('compassPermBtn');
-    const distanceDisplay = document.getElementById('distanceDisplay');
 
     // ─── Load saved destination ───
     function loadDestination() {
@@ -623,10 +583,10 @@
         return;
       }
 
-      // Calculate bearing and distance with Turf.js
+      // Calculate bearing and distance to destination
       const from = turf.point([userLng, userLat]);
       const to = turf.point([destLng, destLat]);
-      currentBearing = turf.bearing(from, to);
+      currentBearing = turf.bearing(from, to); // -180 to 180
       currentDistance = turf.distance(from, to, { units: 'meters' });
 
       // Format distance
@@ -647,18 +607,32 @@
       // Not arrived — show arrow
       arrowContainer.style.display = '';
       arrivedIcon.classList.remove('visible');
-      arrowContainer.classList.remove('arrived');
-      setStatus('');
 
-      // Calculate arrow angle
-      const rawAngle = currentBearing - compassHeading;
+      // If heading not calibrated yet, show arrow pointing straight at bearing
+      // but in a dimmed "calibrating" state
+      if (travelHeading === null) {
+        arrowContainer.classList.add('calibrating');
+        // Point arrow straight up (toward destination in absolute terms)
+        // Since we have no heading reference, just show it pointing up
+        smoothedAngle = 0;
+        arrowContainer.style.transform = `rotate(0deg)`;
+        setStatus('Start walking to calibrate...');
+        return;
+      }
+
+      arrowContainer.classList.remove('calibrating');
+
+      // Calculate arrow angle: bearing to dest minus our travel heading
+      // This gives the angle relative to the direction we're walking
+      const rawAngle = currentBearing - travelHeading;
       const angleDiff = shortestAngleDiff(smoothedAngle, rawAngle);
-      smoothedAngle = smoothedAngle + SMOOTH * angleDiff;
+      smoothedAngle = smoothedAngle + ARROW_SMOOTH * angleDiff;
 
       arrowContainer.style.transform = `rotate(${smoothedAngle}deg)`;
+      setStatus('');
     }
 
-    // ─── GPS ───
+    // ─── GPS with movement-based heading ───
     function initGPS() {
       if (!navigator.geolocation) {
         setStatus('GPS not available on this device', 'error');
@@ -672,6 +646,35 @@
           userLat = position.coords.latitude;
           userLng = position.coords.longitude;
           hasGPS = true;
+
+          // Calculate travel heading from movement
+          if (prevLat !== null && prevLng !== null) {
+            const prevPoint = turf.point([prevLng, prevLat]);
+            const currPoint = turf.point([userLng, userLat]);
+            const moveDist = turf.distance(prevPoint, currPoint, { units: 'meters' });
+
+            // Only update heading if we moved enough (filters GPS jitter)
+            if (moveDist >= MIN_MOVE_METERS) {
+              const moveBearing = turf.bearing(prevPoint, currPoint);
+
+              if (travelHeading === null) {
+                // First calibration — set directly
+                travelHeading = moveBearing;
+              } else {
+                // Smooth subsequent heading changes
+                const headingDiff = shortestAngleDiff(travelHeading, moveBearing);
+                travelHeading = travelHeading + HEADING_SMOOTH * headingDiff;
+              }
+
+              prevLat = userLat;
+              prevLng = userLng;
+            }
+          } else {
+            // First GPS fix — store as previous position
+            prevLat = userLat;
+            prevLng = userLng;
+          }
+
           updateNavigation();
         },
         (error) => {
@@ -695,46 +698,8 @@
       );
     }
 
-    // ─── Compass / Device Orientation ───
-    function handleOrientation(event) {
-      hasCompass = true;
-      if (event.webkitCompassHeading !== undefined) {
-        // iOS: webkitCompassHeading is degrees from magnetic north
-        compassHeading = event.webkitCompassHeading;
-      } else if (event.alpha !== null) {
-        // Android: alpha is 0-360, needs to be inverted
-        compassHeading = 360 - event.alpha;
-      }
-      updateNavigation();
-    }
-
-    async function initCompass() {
-      if (typeof DeviceOrientationEvent !== 'undefined' &&
-          typeof DeviceOrientationEvent.requestPermission === 'function') {
-        // iOS 13+ — need to request permission via user gesture
-        compassPermBtn.classList.add('visible');
-        compassPermBtn.addEventListener('click', async () => {
-          try {
-            const response = await DeviceOrientationEvent.requestPermission();
-            if (response === 'granted') {
-              window.addEventListener('deviceorientation', handleOrientation, true);
-              compassPermBtn.classList.remove('visible');
-            } else {
-              setStatus('Compass permission denied', 'error');
-            }
-          } catch (err) {
-            setStatus('Compass error — try reloading', 'error');
-          }
-        });
-      } else if (typeof DeviceOrientationEvent !== 'undefined') {
-        // Android / older iOS — just listen
-        window.addEventListener('deviceorientation', handleOrientation, true);
-      }
-    }
-
     // ─── Admin Panel ───
     function openAdmin() {
-      // Pre-fill inputs if destination exists
       if (destLat !== null && destLng !== null) {
         latInput.value = destLat;
         lngInput.value = destLng;
@@ -776,6 +741,11 @@
       destLat = lat;
       destLng = lng;
 
+      // Reset heading calibration for new destination
+      travelHeading = null;
+      prevLat = userLat;
+      prevLng = userLng;
+
       arrowContainer.classList.remove('no-dest');
       arrivedIcon.classList.remove('visible');
       arrowContainer.style.display = '';
@@ -797,7 +767,6 @@
     adminBackdrop.addEventListener('click', closeAdmin);
     saveDestBtn.addEventListener('click', saveDestination);
 
-    // Allow Enter key in inputs to save
     latInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') lngInput.focus(); });
     lngInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') saveDestination(); });
 
@@ -809,7 +778,6 @@
     // ─── Init ───
     loadDestination();
     initGPS();
-    initCompass();
   </script>
 </body>
 </html>
