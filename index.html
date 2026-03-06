@@ -6,10 +6,8 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="mobile-web-app-capable" content="yes">
-  <meta name="theme-color" content="#0a0a0a">
   <title>Event Navigator</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
   <style>
     *, *::before, *::after {
@@ -25,9 +23,9 @@
     }
 
     body {
-      font-family: 'Space Mono', monospace;
       background: #0a0a0a;
       color: #ffffff;
+      font-family: 'Space Mono', monospace;
       display: flex;
       flex-direction: column;
       align-items: center;
@@ -36,56 +34,70 @@
       user-select: none;
     }
 
-    /* ─── Admin Button ─── */
-    .admin-btn {
+    /* ─── Status Bar ─── */
+    .status-bar {
       position: fixed;
-      top: 16px;
-      right: 16px;
-      z-index: 100;
-      background: rgba(255, 255, 255, 0.06);
-      border: 1px solid rgba(255, 255, 255, 0.1);
+      top: 0;
+      left: 0;
+      right: 0;
+      padding: 12px 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      z-index: 10;
+    }
+
+    .status-text {
+      font-size: 11px;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      color: rgba(255, 255, 255, 0.4);
+    }
+
+    .admin-btn {
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.12);
       color: rgba(255, 255, 255, 0.4);
       font-family: 'Space Mono', monospace;
-      font-size: 11px;
-      letter-spacing: 0.5px;
+      font-size: 10px;
+      letter-spacing: 1px;
+      text-transform: uppercase;
       padding: 6px 12px;
       border-radius: 4px;
       cursor: pointer;
-      text-transform: uppercase;
-      transition: all 0.2s ease;
+      transition: all 0.2s;
     }
 
     .admin-btn:active {
-      background: rgba(255, 255, 255, 0.12);
+      background: rgba(255, 255, 255, 0.15);
       color: rgba(255, 255, 255, 0.7);
     }
 
-    /* ─── Navigation Screen ─── */
-    .nav-screen {
+    /* ─── Main Navigation View ─── */
+    .nav-view {
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      height: 100%;
-      width: 100%;
-      padding: 20px;
+      gap: 32px;
+      transition: opacity 0.3s;
+    }
+
+    .nav-view.hidden {
+      display: none;
     }
 
     /* ─── Compass Container ─── */
     .compass-container {
       position: relative;
-      width: min(75vw, 320px);
-      height: min(75vw, 320px);
-      display: flex;
-      align-items: center;
-      justify-content: center;
+      width: 280px;
+      height: 280px;
     }
 
     /* ─── Compass Ring ─── */
     .compass-ring {
       position: absolute;
-      width: 100%;
-      height: 100%;
+      inset: 0;
     }
 
     .compass-ring svg {
@@ -96,688 +108,698 @@
     /* ─── Arrow ─── */
     .arrow-container {
       position: absolute;
-      width: 42%;
-      height: 42%;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
       transition: transform 0.25s ease-out;
     }
 
     .arrow-container svg {
-      width: 100%;
-      height: 100%;
-      filter: drop-shadow(0 0 12px rgba(245, 158, 11, 0.4));
+      width: 110px;
+      height: 110px;
+      filter: drop-shadow(0 0 20px rgba(245, 158, 11, 0.3));
     }
 
-    .arrow-container.no-dest svg {
+    .arrow-container.inactive svg {
       filter: none;
       opacity: 0.2;
-      animation: arrow-pulse 2.5s ease-in-out infinite;
     }
 
-    .arrow-container.calibrating svg {
-      filter: drop-shadow(0 0 8px rgba(245, 158, 11, 0.2));
-      opacity: 0.5;
+    .arrow-container.inactive {
+      animation: pulse-inactive 2.5s ease-in-out infinite;
     }
 
-    @keyframes arrow-pulse {
-      0%, 100% { opacity: 0.15; }
-      50% { opacity: 0.3; }
+    @keyframes pulse-inactive {
+      0%, 100% { opacity: 0.4; }
+      50% { opacity: 0.7; }
+    }
+
+    /* ─── Arrived State ─── */
+    .arrived-icon {
+      display: none;
+      position: absolute;
+      inset: 0;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .arrived-icon.visible {
+      display: flex;
+    }
+
+    .arrived-icon svg {
+      width: 100px;
+      height: 100px;
+      animation: arrive-pop 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+
+    @keyframes arrive-pop {
+      0% { transform: scale(0); opacity: 0; }
+      100% { transform: scale(1); opacity: 1; }
     }
 
     /* ─── Distance Display ─── */
     .distance-display {
-      margin-top: 36px;
       text-align: center;
     }
 
     .distance-value {
-      font-size: 40px;
+      font-size: 48px;
       font-weight: 700;
       letter-spacing: -1px;
       line-height: 1;
+      color: #f59e0b;
     }
 
     .distance-unit {
-      font-size: 16px;
-      font-weight: 400;
-      opacity: 0.5;
-      margin-left: 4px;
-    }
-
-    .distance-label {
-      font-size: 12px;
-      opacity: 0.35;
-      margin-top: 6px;
-      letter-spacing: 1px;
-      text-transform: uppercase;
-    }
-
-    /* ─── Status Message ─── */
-    .status-msg {
-      position: fixed;
-      bottom: 40px;
-      left: 50%;
-      transform: translateX(-50%);
-      font-size: 12px;
-      opacity: 0.4;
-      letter-spacing: 0.5px;
-      text-align: center;
-      white-space: nowrap;
-    }
-
-    .status-msg.error {
-      color: #ef4444;
-      opacity: 0.8;
-    }
-
-    .status-msg.arrived {
-      color: #22c55e;
-      opacity: 0.9;
-      font-weight: 700;
       font-size: 14px;
-      text-transform: uppercase;
       letter-spacing: 2px;
+      text-transform: uppercase;
+      color: rgba(255, 255, 255, 0.4);
+      margin-top: 6px;
+    }
+
+    /* ─── Status Messages ─── */
+    .message {
+      text-align: center;
+      padding: 0 32px;
+    }
+
+    .message-primary {
+      font-size: 16px;
+      font-weight: 700;
+      margin-bottom: 8px;
+    }
+
+    .message-secondary {
+      font-size: 12px;
+      color: rgba(255, 255, 255, 0.4);
+      line-height: 1.5;
+    }
+
+    /* ─── Compass Permission Button ─── */
+    .compass-permission-btn {
+      background: rgba(245, 158, 11, 0.15);
+      border: 1px solid rgba(245, 158, 11, 0.4);
+      color: #f59e0b;
+      font-family: 'Space Mono', monospace;
+      font-size: 13px;
+      padding: 14px 28px;
+      border-radius: 8px;
+      cursor: pointer;
+      letter-spacing: 0.5px;
+      transition: all 0.2s;
+    }
+
+    .compass-permission-btn:active {
+      background: rgba(245, 158, 11, 0.3);
+    }
+
+    .compass-permission-btn.hidden {
+      display: none;
     }
 
     /* ─── Admin Panel ─── */
-    .admin-overlay {
+    .admin-panel {
       position: fixed;
       inset: 0;
-      z-index: 200;
+      background: #0a0a0a;
+      z-index: 100;
       display: flex;
       flex-direction: column;
       transform: translateY(100%);
       transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
-      pointer-events: none;
     }
 
-    .admin-overlay.open {
+    .admin-panel.open {
       transform: translateY(0);
-      pointer-events: auto;
-    }
-
-    .admin-backdrop {
-      flex: 0 0 auto;
-      height: 60px;
-      background: transparent;
-    }
-
-    .admin-panel {
-      flex: 1;
-      background: #111111;
-      border-top: 1px solid rgba(255, 255, 255, 0.08);
-      border-radius: 20px 20px 0 0;
-      padding: 28px 24px 40px;
-      overflow-y: auto;
     }
 
     .admin-header {
       display: flex;
-      align-items: center;
       justify-content: space-between;
-      margin-bottom: 32px;
+      align-items: center;
+      padding: 16px 20px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
     }
 
     .admin-title {
-      font-size: 14px;
-      font-weight: 700;
-      text-transform: uppercase;
+      font-size: 13px;
       letter-spacing: 2px;
-      opacity: 0.6;
+      text-transform: uppercase;
+      color: rgba(255, 255, 255, 0.6);
     }
 
-    .admin-close {
-      background: rgba(255, 255, 255, 0.06);
-      border: 1px solid rgba(255, 255, 255, 0.1);
+    .admin-close-btn {
+      background: none;
+      border: 1px solid rgba(255, 255, 255, 0.15);
       color: rgba(255, 255, 255, 0.5);
       font-family: 'Space Mono', monospace;
       font-size: 11px;
+      letter-spacing: 1px;
+      text-transform: uppercase;
       padding: 6px 14px;
       border-radius: 4px;
       cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .admin-close-btn:active {
+      background: rgba(255, 255, 255, 0.1);
+      color: #fff;
+    }
+
+    .admin-body {
+      flex: 1;
+      padding: 28px 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+      overflow-y: auto;
+    }
+
+    .input-group {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .input-label {
+      font-size: 10px;
+      letter-spacing: 2px;
       text-transform: uppercase;
-      letter-spacing: 0.5px;
+      color: rgba(255, 255, 255, 0.35);
     }
 
-    .admin-close:active {
-      background: rgba(255, 255, 255, 0.12);
-    }
-
-    .field-group {
-      margin-bottom: 20px;
-    }
-
-    .field-label {
-      display: block;
-      font-size: 11px;
-      text-transform: uppercase;
-      letter-spacing: 1.5px;
-      opacity: 0.35;
-      margin-bottom: 8px;
-    }
-
-    .field-input {
-      width: 100%;
-      background: rgba(255, 255, 255, 0.04);
-      border: 1px solid rgba(255, 255, 255, 0.1);
-      border-radius: 8px;
-      padding: 14px 16px;
-      color: #ffffff;
+    .input-field {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      color: #fff;
       font-family: 'Space Mono', monospace;
       font-size: 16px;
+      padding: 14px 16px;
+      border-radius: 6px;
       outline: none;
-      transition: border-color 0.2s ease;
+      transition: border-color 0.2s;
+      -webkit-appearance: none;
     }
 
-    .field-input:focus {
+    .input-field:focus {
       border-color: rgba(245, 158, 11, 0.5);
     }
 
-    .field-input::placeholder {
+    .input-field::placeholder {
       color: rgba(255, 255, 255, 0.15);
     }
 
     .admin-tip {
       font-size: 11px;
-      opacity: 0.25;
+      color: rgba(255, 255, 255, 0.25);
       line-height: 1.6;
-      margin-bottom: 28px;
       padding: 12px;
-      background: rgba(255, 255, 255, 0.02);
+      background: rgba(255, 255, 255, 0.03);
       border-radius: 6px;
-      border: 1px solid rgba(255, 255, 255, 0.04);
+      border-left: 2px solid rgba(245, 158, 11, 0.3);
     }
 
-    .admin-save-btn {
-      width: 100%;
+    .set-dest-btn {
       background: #f59e0b;
       border: none;
       color: #0a0a0a;
       font-family: 'Space Mono', monospace;
       font-size: 14px;
       font-weight: 700;
+      letter-spacing: 1px;
+      text-transform: uppercase;
       padding: 16px;
       border-radius: 8px;
       cursor: pointer;
-      text-transform: uppercase;
-      letter-spacing: 1px;
-      transition: opacity 0.2s ease;
+      transition: all 0.2s;
     }
 
-    .admin-save-btn:active {
-      opacity: 0.8;
-    }
-
-    .admin-save-btn:disabled {
-      opacity: 0.4;
-      cursor: not-allowed;
+    .set-dest-btn:active {
+      background: #d97706;
+      transform: scale(0.98);
     }
 
     .admin-feedback {
-      text-align: center;
-      margin-top: 12px;
       font-size: 12px;
-      min-height: 18px;
-      transition: opacity 0.3s ease;
-    }
-
-    .admin-feedback.success {
+      text-align: center;
       color: #22c55e;
+      opacity: 0;
+      transition: opacity 0.3s;
+      min-height: 18px;
     }
 
-    .admin-feedback.error {
-      color: #ef4444;
+    .admin-feedback.visible {
+      opacity: 1;
     }
 
-    .admin-current {
-      margin-top: 24px;
-      padding: 16px;
-      background: rgba(255, 255, 255, 0.02);
-      border: 1px solid rgba(255, 255, 255, 0.06);
-      border-radius: 8px;
+    .current-dest {
+      font-size: 11px;
+      color: rgba(255, 255, 255, 0.25);
+      text-align: center;
+      padding-top: 8px;
+      border-top: 1px solid rgba(255, 255, 255, 0.06);
     }
 
-    .admin-current-label {
-      font-size: 10px;
-      text-transform: uppercase;
-      letter-spacing: 1.5px;
-      opacity: 0.25;
+    .current-dest span {
+      color: rgba(245, 158, 11, 0.6);
+    }
+
+    /* ─── GPS Error Overlay ─── */
+    .gps-error {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: #0a0a0a;
+      z-index: 50;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 32px;
+      text-align: center;
+      gap: 16px;
+    }
+
+    .gps-error.visible {
+      display: flex;
+    }
+
+    .gps-error svg {
+      width: 48px;
+      height: 48px;
+      opacity: 0.4;
       margin-bottom: 8px;
     }
 
-    .admin-current-value {
-      font-size: 13px;
-      opacity: 0.5;
-      word-break: break-all;
+    .gps-error .message-primary {
+      color: #ef4444;
     }
 
-    .admin-current-value.none {
-      font-style: italic;
-      opacity: 0.2;
-    }
-
-    /* ─── Arrived Checkmark ─── */
-    .arrived-icon {
-      display: none;
-    }
-
-    .arrived-icon.visible {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      animation: arrived-pop 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-    }
-
-    @keyframes arrived-pop {
-      0% { transform: scale(0.5); opacity: 0; }
-      100% { transform: scale(1); opacity: 1; }
+    .gps-retry-btn {
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      color: rgba(255, 255, 255, 0.6);
+      font-family: 'Space Mono', monospace;
+      font-size: 12px;
+      padding: 10px 24px;
+      border-radius: 6px;
+      cursor: pointer;
+      margin-top: 8px;
     }
   </style>
 </head>
 <body>
 
-  <!-- Admin Button -->
-  <button class="admin-btn" id="adminBtn">Admin</button>
+  <!-- Status Bar -->
+  <div class="status-bar">
+    <span class="status-text" id="statusText">Waiting for GPS...</span>
+    <button class="admin-btn" id="adminBtn">Admin</button>
+  </div>
 
-  <!-- Navigation Screen -->
-  <div class="nav-screen" id="navScreen">
+  <!-- Main Navigation View -->
+  <div class="nav-view" id="navView">
+
     <!-- Compass + Arrow -->
     <div class="compass-container">
-      <!-- Compass Ring (minimal, no cardinal labels) -->
+      <!-- Compass Ring (fixed to screen) -->
       <div class="compass-ring">
-        <svg viewBox="0 0 300 300" fill="none">
-          <!-- Outer ring -->
-          <circle cx="150" cy="150" r="145" stroke="rgba(255,255,255,0.08)" stroke-width="1"/>
-          <!-- Tick marks (every 30°, purely decorative) -->
-          <line x1="150" y1="10" x2="150" y2="26" stroke="rgba(255,255,255,0.15)" stroke-width="1.5"/>
-          <line x1="225" y1="19.8" x2="220.2" y2="28.1" stroke="rgba(255,255,255,0.07)" stroke-width="1"/>
-          <line x1="290" y1="150" x2="274" y2="150" stroke="rgba(255,255,255,0.15)" stroke-width="1.5"/>
-          <line x1="280.2" y1="75" x2="271.9" y2="79.8" stroke="rgba(255,255,255,0.07)" stroke-width="1"/>
-          <line x1="150" y1="290" x2="150" y2="274" stroke="rgba(255,255,255,0.15)" stroke-width="1.5"/>
-          <line x1="280.2" y1="225" x2="271.9" y2="220.2" stroke="rgba(255,255,255,0.07)" stroke-width="1"/>
-          <line x1="10" y1="150" x2="26" y2="150" stroke="rgba(255,255,255,0.15)" stroke-width="1.5"/>
-          <line x1="225" y1="280.2" x2="220.2" y2="271.9" stroke="rgba(255,255,255,0.07)" stroke-width="1"/>
-          <line x1="75" y1="280.2" x2="79.8" y2="271.9" stroke="rgba(255,255,255,0.07)" stroke-width="1"/>
-          <line x1="19.8" y1="225" x2="28.1" y2="220.2" stroke="rgba(255,255,255,0.07)" stroke-width="1"/>
-          <line x1="19.8" y1="75" x2="28.1" y2="79.8" stroke="rgba(255,255,255,0.07)" stroke-width="1"/>
-          <line x1="75" y1="19.8" x2="79.8" y2="28.1" stroke="rgba(255,255,255,0.07)" stroke-width="1"/>
-          <!-- Inner ring -->
-          <circle cx="150" cy="150" r="100" stroke="rgba(255,255,255,0.04)" stroke-width="1"/>
+        <svg viewBox="0 0 280 280" fill="none">
+          <circle cx="140" cy="140" r="132" stroke="rgba(255,255,255,0.08)" stroke-width="1"/>
+          <circle cx="140" cy="140" r="120" stroke="rgba(255,255,255,0.04)" stroke-width="1" stroke-dasharray="4 8"/>
+          <!-- Cardinal markers -->
+          <text x="140" y="22" text-anchor="middle" fill="rgba(255,255,255,0.3)" font-family="Space Mono, monospace" font-size="11" font-weight="700">N</text>
+          <text x="268" y="144" text-anchor="middle" fill="rgba(255,255,255,0.15)" font-family="Space Mono, monospace" font-size="10">E</text>
+          <text x="140" y="272" text-anchor="middle" fill="rgba(255,255,255,0.15)" font-family="Space Mono, monospace" font-size="10">S</text>
+          <text x="12" y="144" text-anchor="middle" fill="rgba(255,255,255,0.15)" font-family="Space Mono, monospace" font-size="10">W</text>
+          <!-- Tick marks -->
+          <line x1="140" y1="10" x2="140" y2="18" stroke="rgba(255,255,255,0.2)" stroke-width="1.5"/>
+          <line x1="270" y1="140" x2="262" y2="140" stroke="rgba(255,255,255,0.1)" stroke-width="1"/>
+          <line x1="140" y1="270" x2="140" y2="262" stroke="rgba(255,255,255,0.1)" stroke-width="1"/>
+          <line x1="10" y1="140" x2="18" y2="140" stroke="rgba(255,255,255,0.1)" stroke-width="1"/>
+          <!-- Intermediate ticks -->
+          <line x1="233" y1="47" x2="228" y2="52" stroke="rgba(255,255,255,0.06)" stroke-width="1"/>
+          <line x1="233" y1="233" x2="228" y2="228" stroke="rgba(255,255,255,0.06)" stroke-width="1"/>
+          <line x1="47" y1="233" x2="52" y2="228" stroke="rgba(255,255,255,0.06)" stroke-width="1"/>
+          <line x1="47" y1="47" x2="52" y2="52" stroke="rgba(255,255,255,0.06)" stroke-width="1"/>
         </svg>
       </div>
 
-      <!-- Directional Arrow (rotates) -->
-      <div class="arrow-container no-dest" id="arrowContainer">
-        <svg viewBox="0 0 100 120" fill="none" id="arrowSvg">
-          <polygon points="50,4 12,100 50,80 88,100" fill="#f59e0b" />
+      <!-- Directional Arrow -->
+      <div class="arrow-container inactive" id="arrowContainer">
+        <svg viewBox="0 0 100 100" fill="none">
+          <path d="M50 8 L68 72 L50 58 L32 72 Z" fill="#f59e0b" stroke="#f59e0b" stroke-width="1" stroke-linejoin="round"/>
         </svg>
       </div>
 
-      <!-- Arrived Checkmark (hidden until arrival) -->
+      <!-- Arrived Checkmark -->
       <div class="arrived-icon" id="arrivedIcon">
-        <svg width="100" height="100" viewBox="0 0 100 100" fill="none">
-          <circle cx="50" cy="50" r="45" stroke="#22c55e" stroke-width="3" opacity="0.3"/>
-          <polyline points="28,52 44,68 72,36" stroke="#22c55e" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+        <svg viewBox="0 0 100 100" fill="none">
+          <circle cx="50" cy="50" r="42" stroke="#22c55e" stroke-width="3" fill="rgba(34,197,94,0.1)"/>
+          <path d="M30 52 L44 66 L70 36" stroke="#22c55e" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
         </svg>
       </div>
     </div>
 
-    <!-- Distance Display -->
+    <!-- Distance -->
     <div class="distance-display" id="distanceDisplay">
-      <div>
-        <span class="distance-value" id="distanceValue">---</span>
-        <span class="distance-unit" id="distanceUnit"></span>
-      </div>
-      <div class="distance-label" id="distanceLabel"></div>
+      <div class="distance-value" id="distanceValue">---</div>
+      <div class="distance-unit" id="distanceUnit">awaiting signal</div>
     </div>
+
+    <!-- Messages -->
+    <div class="message" id="messageArea"></div>
+
+    <!-- Compass Permission Button (iOS) -->
+    <button class="compass-permission-btn hidden" id="compassPermBtn">Enable Compass</button>
   </div>
 
-  <!-- Status Message -->
-  <div class="status-msg" id="statusMsg">Waiting for GPS...</div>
+  <!-- GPS Error Overlay -->
+  <div class="gps-error" id="gpsError">
+    <svg viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.4)" stroke-width="1.5">
+      <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/>
+      <line x1="4" y1="4" x2="20" y2="20" stroke="#ef4444" stroke-width="2"/>
+    </svg>
+    <div class="message-primary">Location Access Denied</div>
+    <div class="message-secondary">This app needs GPS to guide you.<br>Please enable location access in your browser settings and reload.</div>
+    <button class="gps-retry-btn" id="gpsRetryBtn">Retry</button>
+  </div>
 
-  <!-- Admin Panel Overlay -->
-  <div class="admin-overlay" id="adminOverlay">
-    <div class="admin-backdrop" id="adminBackdrop"></div>
-    <div class="admin-panel">
-      <div class="admin-header">
-        <div class="admin-title">Set Destination</div>
-        <button class="admin-close" id="adminClose">Close</button>
+  <!-- Admin Panel -->
+  <div class="admin-panel" id="adminPanel">
+    <div class="admin-header">
+      <span class="admin-title">Set Destination</span>
+      <button class="admin-close-btn" id="adminCloseBtn">Close</button>
+    </div>
+    <div class="admin-body">
+      <div class="input-group">
+        <label class="input-label" for="latInput">Latitude</label>
+        <input type="text" inputmode="decimal" class="input-field" id="latInput" placeholder="e.g. 40.748817">
       </div>
-
-      <div class="field-group">
-        <label class="field-label" for="latInput">Latitude</label>
-        <input class="field-input" type="text" id="latInput" inputmode="decimal" placeholder="e.g. 40.7128">
+      <div class="input-group">
+        <label class="input-label" for="lngInput">Longitude</label>
+        <input type="text" inputmode="decimal" class="input-field" id="lngInput" placeholder="e.g. -73.985428">
       </div>
-
-      <div class="field-group">
-        <label class="field-label" for="lngInput">Longitude</label>
-        <input class="field-input" type="text" id="lngInput" inputmode="decimal" placeholder="e.g. -74.0060">
-      </div>
-
       <div class="admin-tip">
-        Tip: Get coordinates from Google Maps by long-pressing a location and copying the numbers.
+        Tip: Get coordinates from Google Maps by long-pressing a location and tapping the coordinates that appear.
       </div>
-
-      <button class="admin-save-btn" id="saveDestBtn">Set Destination</button>
+      <button class="set-dest-btn" id="setDestBtn">Set Destination</button>
       <div class="admin-feedback" id="adminFeedback"></div>
-
-      <div class="admin-current" id="currentDestSection">
-        <div class="admin-current-label">Current Destination</div>
-        <div class="admin-current-value" id="currentDestValue">None set</div>
-      </div>
+      <div class="current-dest" id="currentDest"></div>
     </div>
   </div>
 
-  <!-- Turf.js -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/Turf.js/6.5.0/turf.min.js"></script>
-
   <script>
-    // ─── State ───
-    let userLat = null;
-    let userLng = null;
-    let destLat = null;
-    let destLng = null;
-    let currentBearing = 0;
-    let currentDistance = Infinity;
-    let smoothedAngle = 0;
-    let hasGPS = false;
-    let gpsWatchId = null;
+    (function () {
+      'use strict';
 
-    // Movement-based heading state
-    let prevLat = null;
-    let prevLng = null;
-    let travelHeading = null; // null = not yet calibrated
-    const MIN_MOVE_METERS = 3; // minimum movement to update heading (filters GPS jitter)
-    const HEADING_SMOOTH = 0.3; // smoothing for travel heading changes
+      // ─── State ───
+      let userLat = null;
+      let userLng = null;
+      let destLat = null;
+      let destLng = null;
+      let compassHeading = 0;
+      let currentBearing = 0;
+      let currentDistance = 0;
+      let smoothedAngle = 0;
+      let hasGPS = false;
+      let hasCompass = false;
+      let gpsWatchId = null;
 
-    const ARROW_SMOOTH = 0.2;
-    const ARRIVED_THRESHOLD = 10; // meters
+      const SMOOTH = 0.15;
+      const ARRIVE_THRESHOLD = 10; // meters
 
-    // ─── DOM Refs ───
-    const arrowContainer = document.getElementById('arrowContainer');
-    const arrivedIcon = document.getElementById('arrivedIcon');
-    const distanceValue = document.getElementById('distanceValue');
-    const distanceUnit = document.getElementById('distanceUnit');
-    const distanceLabel = document.getElementById('distanceLabel');
-    const statusMsg = document.getElementById('statusMsg');
-    const adminBtn = document.getElementById('adminBtn');
-    const adminOverlay = document.getElementById('adminOverlay');
-    const adminBackdrop = document.getElementById('adminBackdrop');
-    const adminClose = document.getElementById('adminClose');
-    const latInput = document.getElementById('latInput');
-    const lngInput = document.getElementById('lngInput');
-    const saveDestBtn = document.getElementById('saveDestBtn');
-    const adminFeedback = document.getElementById('adminFeedback');
-    const currentDestValue = document.getElementById('currentDestValue');
+      // ─── DOM References ───
+      const statusText = document.getElementById('statusText');
+      const adminBtn = document.getElementById('adminBtn');
+      const navView = document.getElementById('navView');
+      const arrowContainer = document.getElementById('arrowContainer');
+      const arrivedIcon = document.getElementById('arrivedIcon');
+      const distanceValue = document.getElementById('distanceValue');
+      const distanceUnit = document.getElementById('distanceUnit');
+      const messageArea = document.getElementById('messageArea');
+      const compassPermBtn = document.getElementById('compassPermBtn');
+      const gpsError = document.getElementById('gpsError');
+      const gpsRetryBtn = document.getElementById('gpsRetryBtn');
+      const adminPanel = document.getElementById('adminPanel');
+      const adminCloseBtn = document.getElementById('adminCloseBtn');
+      const latInput = document.getElementById('latInput');
+      const lngInput = document.getElementById('lngInput');
+      const setDestBtn = document.getElementById('setDestBtn');
+      const adminFeedback = document.getElementById('adminFeedback');
+      const currentDest = document.getElementById('currentDest');
 
-    // ─── Load saved destination ───
-    function loadDestination() {
-      const lat = localStorage.getItem('event_dest_lat');
-      const lng = localStorage.getItem('event_dest_lng');
-      if (lat !== null && lng !== null) {
-        destLat = parseFloat(lat);
-        destLng = parseFloat(lng);
-        if (!isNaN(destLat) && !isNaN(destLng)) {
-          arrowContainer.classList.remove('no-dest');
+      // ─── Load Saved Destination ───
+      function loadDestination() {
+        const savedLat = localStorage.getItem('event_dest_lat');
+        const savedLng = localStorage.getItem('event_dest_lng');
+        if (savedLat !== null && savedLng !== null) {
+          destLat = parseFloat(savedLat);
+          destLng = parseFloat(savedLng);
+          latInput.value = destLat;
+          lngInput.value = destLng;
           updateCurrentDestDisplay();
+          return true;
+        }
+        return false;
+      }
+
+      function updateCurrentDestDisplay() {
+        if (destLat !== null && destLng !== null) {
+          currentDest.innerHTML = 'Current: <span>' + destLat.toFixed(6) + ', ' + destLng.toFixed(6) + '</span>';
+        } else {
+          currentDest.textContent = '';
+        }
+      }
+
+      // ─── GPS ───
+      function startGPS() {
+        if (!navigator.geolocation) {
+          showMessage('GPS not supported', 'Your browser does not support geolocation.');
           return;
         }
-      }
-      destLat = null;
-      destLng = null;
-      arrowContainer.classList.add('no-dest');
-      setStatus('Set destination in admin');
-    }
 
-    function updateCurrentDestDisplay() {
-      if (destLat !== null && destLng !== null) {
-        currentDestValue.textContent = `${destLat.toFixed(6)}, ${destLng.toFixed(6)}`;
-        currentDestValue.classList.remove('none');
-      } else {
-        currentDestValue.textContent = 'None set';
-        currentDestValue.classList.add('none');
-      }
-    }
+        statusText.textContent = 'Waiting for GPS...';
 
-    // ─── Status Message ───
-    function setStatus(msg, type) {
-      statusMsg.textContent = msg;
-      statusMsg.className = 'status-msg';
-      if (type) statusMsg.classList.add(type);
-    }
-
-    // ─── Angle Math ───
-    function normalizeAngle(angle) {
-      return ((angle % 360) + 360) % 360;
-    }
-
-    function shortestAngleDiff(from, to) {
-      let diff = normalizeAngle(to) - normalizeAngle(from);
-      if (diff > 180) diff -= 360;
-      if (diff < -180) diff += 360;
-      return diff;
-    }
-
-    // ─── Distance Formatting ───
-    function formatDistance(meters) {
-      if (meters >= 1000) {
-        return { value: (meters / 1000).toFixed(1), unit: 'km' };
-      }
-      return { value: Math.round(meters).toString(), unit: 'm' };
-    }
-
-    // ─── Navigation Update ───
-    function updateNavigation() {
-      if (destLat === null || destLng === null) {
-        distanceValue.textContent = '---';
-        distanceUnit.textContent = '';
-        distanceLabel.textContent = '';
-        setStatus('Set destination in admin');
-        return;
+        gpsWatchId = navigator.geolocation.watchPosition(
+          function (position) {
+            userLat = position.coords.latitude;
+            userLng = position.coords.longitude;
+            hasGPS = true;
+            gpsError.classList.remove('visible');
+            updateNavigation();
+          },
+          function (err) {
+            if (err.code === 1) {
+              // Permission denied
+              gpsError.classList.add('visible');
+            } else {
+              statusText.textContent = 'GPS signal lost...';
+            }
+          },
+          {
+            enableHighAccuracy: true,
+            maximumAge: 1000,
+            timeout: 15000
+          }
+        );
       }
 
-      if (!hasGPS || userLat === null) {
-        distanceValue.textContent = '---';
-        distanceUnit.textContent = '';
-        distanceLabel.textContent = '';
-        setStatus('Waiting for GPS...');
-        return;
+      gpsRetryBtn.addEventListener('click', function () {
+        gpsError.classList.remove('visible');
+        if (gpsWatchId !== null) {
+          navigator.geolocation.clearWatch(gpsWatchId);
+        }
+        startGPS();
+      });
+
+      // ─── Compass ───
+      function handleOrientation(event) {
+        hasCompass = true;
+        if (event.webkitCompassHeading !== undefined) {
+          // iOS: webkitCompassHeading is degrees from magnetic north
+          compassHeading = event.webkitCompassHeading;
+        } else if (event.alpha !== null) {
+          // Android: alpha is 0-360
+          compassHeading = 360 - event.alpha;
+        }
+        if (hasGPS) {
+          updateNavigation();
+        }
       }
 
-      // Calculate bearing and distance to destination
-      const from = turf.point([userLng, userLat]);
-      const to = turf.point([destLng, destLat]);
-      currentBearing = turf.bearing(from, to); // -180 to 180
-      currentDistance = turf.distance(from, to, { units: 'meters' });
+      async function requestCompassPermission() {
+        if (typeof DeviceOrientationEvent !== 'undefined' &&
+            typeof DeviceOrientationEvent.requestPermission === 'function') {
+          try {
+            const response = await DeviceOrientationEvent.requestPermission();
+            if (response === 'granted') {
+              window.addEventListener('deviceorientation', handleOrientation, true);
+              compassPermBtn.classList.add('hidden');
+            } else {
+              showMessage('Compass Denied', 'Enable motion sensors in Settings > Safari to use the compass.');
+            }
+          } catch (e) {
+            showMessage('Compass Error', 'Could not access compass. Try reloading.');
+          }
+        }
+      }
 
-      // Format distance
-      const dist = formatDistance(currentDistance);
-      distanceValue.textContent = dist.value;
-      distanceUnit.textContent = dist.unit;
-      distanceLabel.textContent = 'away';
+      function initCompass() {
+        if (typeof DeviceOrientationEvent !== 'undefined' &&
+            typeof DeviceOrientationEvent.requestPermission === 'function') {
+          // iOS 13+ — need explicit permission via user gesture
+          compassPermBtn.classList.remove('hidden');
+          compassPermBtn.addEventListener('click', requestCompassPermission);
+        } else if ('DeviceOrientationEvent' in window) {
+          // Android / older iOS — just listen
+          window.addEventListener('deviceorientation', handleOrientation, true);
+        }
+      }
 
-      // Check arrived state
-      if (currentDistance < ARRIVED_THRESHOLD) {
+      // ─── Navigation Logic ───
+      function updateNavigation() {
+        if (!hasGPS) return;
+
+        if (destLat === null || destLng === null) {
+          arrowContainer.classList.add('inactive');
+          arrivedIcon.classList.remove('visible');
+          distanceValue.textContent = '---';
+          distanceUnit.textContent = 'no destination';
+          statusText.textContent = 'No destination set';
+          showMessage('No Destination', 'Open admin panel to set event coordinates.');
+          return;
+        }
+
+        // Calculate bearing and distance with Turf.js
+        const from = turf.point([userLng, userLat]);
+        const to = turf.point([destLng, destLat]);
+        currentBearing = turf.bearing(from, to);
+        currentDistance = turf.distance(from, to, { units: 'meters' });
+
+        // Clear messages
+        clearMessage();
+
+        // Check arrived state
+        if (currentDistance < ARRIVE_THRESHOLD) {
+          showArrived();
+          return;
+        }
+
+        // Show navigation
+        arrivedIcon.classList.remove('visible');
+        arrowContainer.style.display = '';
+
+        if (hasCompass) {
+          arrowContainer.classList.remove('inactive');
+          statusText.textContent = 'Navigating';
+
+          // Calculate arrow rotation
+          let rawAngle = currentBearing - compassHeading;
+          // Shortest-path angle interpolation
+          let delta = ((rawAngle - smoothedAngle + 540) % 360) - 180;
+          smoothedAngle = smoothedAngle + SMOOTH * delta;
+          arrowContainer.style.transform = 'rotate(' + smoothedAngle + 'deg)';
+        } else {
+          arrowContainer.classList.add('inactive');
+          statusText.textContent = 'No compass — enable compass';
+        }
+
+        // Update distance display
+        if (currentDistance >= 1000) {
+          distanceValue.textContent = (currentDistance / 1000).toFixed(1);
+          distanceUnit.textContent = 'km away';
+        } else {
+          distanceValue.textContent = Math.round(currentDistance);
+          distanceUnit.textContent = 'm away';
+        }
+      }
+
+      function showArrived() {
         arrowContainer.style.display = 'none';
         arrivedIcon.classList.add('visible');
-        distanceLabel.textContent = '';
-        setStatus("You've arrived!", 'arrived');
-        return;
+        distanceValue.textContent = '0';
+        distanceUnit.textContent = "you've arrived";
+        statusText.textContent = 'Arrived';
+        distanceValue.style.color = '#22c55e';
       }
 
-      // Not arrived — show arrow
-      arrowContainer.style.display = '';
-      arrivedIcon.classList.remove('visible');
-
-      // If heading not calibrated yet, show arrow pointing straight at bearing
-      // but in a dimmed "calibrating" state
-      if (travelHeading === null) {
-        arrowContainer.classList.add('calibrating');
-        // Point arrow straight up (toward destination in absolute terms)
-        // Since we have no heading reference, just show it pointing up
-        smoothedAngle = 0;
-        arrowContainer.style.transform = `rotate(0deg)`;
-        setStatus('Start walking to calibrate...');
-        return;
+      // ─── Messages ───
+      function showMessage(primary, secondary) {
+        messageArea.innerHTML =
+          '<div class="message-primary">' + primary + '</div>' +
+          '<div class="message-secondary">' + secondary + '</div>';
       }
 
-      arrowContainer.classList.remove('calibrating');
-
-      // Calculate arrow angle: bearing to dest minus our travel heading
-      // This gives the angle relative to the direction we're walking
-      const rawAngle = currentBearing - travelHeading;
-      const angleDiff = shortestAngleDiff(smoothedAngle, rawAngle);
-      smoothedAngle = smoothedAngle + ARROW_SMOOTH * angleDiff;
-
-      arrowContainer.style.transform = `rotate(${smoothedAngle}deg)`;
-      setStatus('');
-    }
-
-    // ─── GPS with movement-based heading ───
-    function initGPS() {
-      if (!navigator.geolocation) {
-        setStatus('GPS not available on this device', 'error');
-        return;
+      function clearMessage() {
+        messageArea.innerHTML = '';
+        distanceValue.style.color = '#f59e0b';
       }
 
-      setStatus('Waiting for GPS...');
+      // ─── Admin Panel ───
+      adminBtn.addEventListener('click', function () {
+        adminPanel.classList.add('open');
+        if (destLat !== null) latInput.value = destLat;
+        if (destLng !== null) lngInput.value = destLng;
+        updateCurrentDestDisplay();
+      });
 
-      gpsWatchId = navigator.geolocation.watchPosition(
-        (position) => {
-          userLat = position.coords.latitude;
-          userLng = position.coords.longitude;
-          hasGPS = true;
+      adminCloseBtn.addEventListener('click', function () {
+        adminPanel.classList.remove('open');
+      });
 
-          // Calculate travel heading from movement
-          if (prevLat !== null && prevLng !== null) {
-            const prevPoint = turf.point([prevLng, prevLat]);
-            const currPoint = turf.point([userLng, userLat]);
-            const moveDist = turf.distance(prevPoint, currPoint, { units: 'meters' });
+      setDestBtn.addEventListener('click', function () {
+        const lat = parseFloat(latInput.value.trim());
+        const lng = parseFloat(lngInput.value.trim());
 
-            // Only update heading if we moved enough (filters GPS jitter)
-            if (moveDist >= MIN_MOVE_METERS) {
-              const moveBearing = turf.bearing(prevPoint, currPoint);
-
-              if (travelHeading === null) {
-                // First calibration — set directly
-                travelHeading = moveBearing;
-              } else {
-                // Smooth subsequent heading changes
-                const headingDiff = shortestAngleDiff(travelHeading, moveBearing);
-                travelHeading = travelHeading + HEADING_SMOOTH * headingDiff;
-              }
-
-              prevLat = userLat;
-              prevLng = userLng;
-            }
-          } else {
-            // First GPS fix — store as previous position
-            prevLat = userLat;
-            prevLng = userLng;
-          }
-
-          updateNavigation();
-        },
-        (error) => {
-          switch (error.code) {
-            case error.PERMISSION_DENIED:
-              setStatus('Location permission denied — please allow access', 'error');
-              break;
-            case error.POSITION_UNAVAILABLE:
-              setStatus('Location unavailable — try outdoors', 'error');
-              break;
-            case error.TIMEOUT:
-              setStatus('GPS timeout — retrying...', 'error');
-              break;
-          }
-        },
-        {
-          enableHighAccuracy: true,
-          maximumAge: 1000,
-          timeout: 15000
+        if (isNaN(lat) || isNaN(lng) || lat < -90 || lat > 90 || lng < -180 || lng > 180) {
+          showAdminFeedback('Invalid coordinates', true);
+          return;
         }
-      );
-    }
 
-    // ─── Admin Panel ───
-    function openAdmin() {
-      if (destLat !== null && destLng !== null) {
-        latInput.value = destLat;
-        lngInput.value = destLng;
-      }
-      updateCurrentDestDisplay();
-      adminFeedback.textContent = '';
-      adminOverlay.classList.add('open');
-    }
+        destLat = lat;
+        destLng = lng;
+        localStorage.setItem('event_dest_lat', lat.toString());
+        localStorage.setItem('event_dest_lng', lng.toString());
+        updateCurrentDestDisplay();
+        showAdminFeedback('Destination saved');
+        updateNavigation();
+      });
 
-    function closeAdmin() {
-      adminOverlay.classList.remove('open');
-    }
-
-    function saveDestination() {
-      const lat = parseFloat(latInput.value.trim());
-      const lng = parseFloat(lngInput.value.trim());
-
-      if (isNaN(lat) || isNaN(lng)) {
-        adminFeedback.textContent = 'Enter valid numbers';
-        adminFeedback.className = 'admin-feedback error';
-        return;
+      function showAdminFeedback(text, isError) {
+        adminFeedback.textContent = text;
+        adminFeedback.style.color = isError ? '#ef4444' : '#22c55e';
+        adminFeedback.classList.add('visible');
+        setTimeout(function () {
+          adminFeedback.classList.remove('visible');
+        }, 2500);
       }
 
-      if (lat < -90 || lat > 90) {
-        adminFeedback.textContent = 'Latitude must be -90 to 90';
-        adminFeedback.className = 'admin-feedback error';
-        return;
+      // ─── Orientation Lock ───
+      function lockPortrait() {
+        if (screen.orientation && screen.orientation.lock) {
+          screen.orientation.lock('portrait').catch(function () {
+            // Silently fail — not all browsers support this
+          });
+        }
       }
 
-      if (lng < -180 || lng > 180) {
-        adminFeedback.textContent = 'Longitude must be -180 to 180';
-        adminFeedback.className = 'admin-feedback error';
-        return;
+      // ─── Init ───
+      function init() {
+        lockPortrait();
+        const hasDest = loadDestination();
+        if (!hasDest) {
+          showMessage('No Destination', 'Open admin panel to set event coordinates.');
+        }
+        startGPS();
+        initCompass();
       }
 
-      localStorage.setItem('event_dest_lat', lat.toString());
-      localStorage.setItem('event_dest_lng', lng.toString());
-
-      destLat = lat;
-      destLng = lng;
-
-      // Reset heading calibration for new destination
-      travelHeading = null;
-      prevLat = userLat;
-      prevLng = userLng;
-
-      arrowContainer.classList.remove('no-dest');
-      arrivedIcon.classList.remove('visible');
-      arrowContainer.style.display = '';
-
-      updateCurrentDestDisplay();
-      updateNavigation();
-
-      adminFeedback.textContent = 'Destination saved';
-      adminFeedback.className = 'admin-feedback success';
-
-      setTimeout(() => {
-        closeAdmin();
-      }, 800);
-    }
-
-    // ─── Event Listeners ───
-    adminBtn.addEventListener('click', openAdmin);
-    adminClose.addEventListener('click', closeAdmin);
-    adminBackdrop.addEventListener('click', closeAdmin);
-    saveDestBtn.addEventListener('click', saveDestination);
-
-    latInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') lngInput.focus(); });
-    lngInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') saveDestination(); });
-
-    // ─── Lock portrait orientation if possible ───
-    if (screen.orientation && screen.orientation.lock) {
-      screen.orientation.lock('portrait').catch(() => {});
-    }
-
-    // ─── Init ───
-    loadDestination();
-    initGPS();
+      init();
+    })();
   </script>
 </body>
 </html>
