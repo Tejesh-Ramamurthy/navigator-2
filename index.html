@@ -1,0 +1,736 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>Radar Navigator</title>
+<script src="https://cdn.jsdelivr.net/npm/@turf/turf@6/turf.min.js"></script>
+<style>
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html, body {
+  height: 100%;
+  overflow: hidden;
+  touch-action: manipulation;
+}
+
+body {
+  background: #111;
+  color: #fff;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+/* ── Admin Button ── */
+#admin-btn {
+  position: fixed;
+  top: 14px;
+  right: 14px;
+  background: transparent;
+  color: #555;
+  border: 1px solid #333;
+  padding: 7px 14px;
+  border-radius: 14px;
+  font-size: 11px;
+  letter-spacing: 0.5px;
+  cursor: pointer;
+  z-index: 50;
+  transition: border-color 0.2s, color 0.2s;
+}
+
+#admin-btn:active {
+  border-color: #666;
+  color: #999;
+}
+
+/* ── Distance Display ── */
+#distance-section {
+  margin-top: 48px;
+  text-align: center;
+}
+
+#distance-section .label {
+  font-size: 11px;
+  color: #666;
+  text-transform: uppercase;
+  letter-spacing: 2.5px;
+}
+
+#distance-value {
+  font-size: 52px;
+  font-weight: 200;
+  margin-top: 6px;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+  min-height: 56px;
+}
+
+/* ── Radar ── */
+#radar-wrap {
+  position: relative;
+  margin-top: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+#radar-canvas {
+  display: block;
+}
+
+/* ── Controls ── */
+#controls {
+  margin-top: 32px;
+  display: flex;
+  gap: 14px;
+}
+
+.btn {
+  background: transparent;
+  color: #ccc;
+  border: 1px solid #444;
+  padding: 13px 30px;
+  border-radius: 26px;
+  font-size: 13px;
+  cursor: pointer;
+  transition: background 0.2s, border-color 0.2s, color 0.2s;
+  letter-spacing: 0.3px;
+}
+
+.btn:active {
+  background: rgba(255,255,255,0.06);
+}
+
+.btn.running {
+  border-color: #ff3b3b;
+  color: #ff3b3b;
+}
+
+/* ── Status ── */
+#status {
+  position: fixed;
+  bottom: 20px;
+  font-size: 10px;
+  color: #333;
+  letter-spacing: 0.5px;
+  text-align: center;
+  padding: 0 20px;
+}
+
+/* ── Admin Panel ── */
+#admin-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.94);
+  z-index: 200;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 28px;
+}
+
+#admin-overlay.open {
+  display: flex;
+}
+
+#admin-overlay h2 {
+  font-size: 18px;
+  font-weight: 300;
+  margin-bottom: 28px;
+  color: #aaa;
+  letter-spacing: 1px;
+}
+
+.field {
+  width: 100%;
+  max-width: 300px;
+  margin-bottom: 18px;
+}
+
+.field label {
+  display: block;
+  font-size: 10px;
+  color: #666;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  margin-bottom: 5px;
+}
+
+.field input[type="number"] {
+  width: 100%;
+  background: #1a1a1a;
+  border: 1px solid #333;
+  color: #fff;
+  padding: 11px 14px;
+  border-radius: 8px;
+  font-size: 15px;
+  outline: none;
+  -webkit-appearance: none;
+}
+
+.field input[type="number"]:focus {
+  border-color: #555;
+}
+
+.field input[type="range"] {
+  width: 100%;
+  accent-color: #ff3b3b;
+  margin-top: 2px;
+}
+
+.field .rv {
+  font-size: 12px;
+  color: #777;
+  margin-top: 3px;
+  text-align: right;
+}
+
+#admin-btns {
+  display: flex;
+  gap: 12px;
+  margin-top: 12px;
+}
+</style>
+</head>
+<body>
+
+<button id="admin-btn">Admin</button>
+
+<div id="distance-section">
+  <div class="label">Distance to Target</div>
+  <div id="distance-value">---</div>
+</div>
+
+<div id="radar-wrap">
+  <canvas id="radar-canvas"></canvas>
+</div>
+
+<div id="controls">
+  <button class="btn" id="start-btn">Start Navigation</button>
+  <button class="btn" id="recalibrate-btn">Recalibrate</button>
+</div>
+
+<div id="status">Waiting to start</div>
+
+<!-- Admin Panel -->
+<div id="admin-overlay">
+  <h2>Configuration</h2>
+  <div class="field">
+    <label>Target Latitude</label>
+    <input type="number" id="inp-lat" step="0.000001" placeholder="40.748817">
+  </div>
+  <div class="field">
+    <label>Target Longitude</label>
+    <input type="number" id="inp-lng" step="0.000001" placeholder="-73.985428">
+  </div>
+  <div class="field">
+    <label>Needle Smoothing</label>
+    <input type="range" id="inp-smooth" min="0.02" max="0.35" step="0.01" value="0.12">
+    <div class="rv" id="rv-smooth">0.12</div>
+  </div>
+  <div class="field">
+    <label>Barrier Angle (±degrees)</label>
+    <input type="range" id="inp-barrier" min="10" max="90" step="1" value="30">
+    <div class="rv" id="rv-barrier">±30°</div>
+  </div>
+  <div id="admin-btns">
+    <button class="btn" id="btn-save">Save</button>
+    <button class="btn" id="btn-close">Close</button>
+  </div>
+</div>
+
+<script>
+(function() {
+  'use strict';
+
+  /* ══════════════════════════════════════
+     STATE
+     ══════════════════════════════════════ */
+  var S = {
+    active: false,
+    userLat: null,
+    userLng: null,
+    prevLat: null,
+    prevLng: null,
+    deviceHeading: 0,
+    movementHeading: null,
+    hasOrientation: false,
+    targetLat: 40.748817,
+    targetLng: -73.985428,
+    smoothing: 0.12,
+    barrier: 30,
+    displayAngle: 0,
+    distance: null,
+    watchId: null,
+    headingOffset: 0,
+    sweep: 0
+  };
+
+  /* ══════════════════════════════════════
+     SETTINGS PERSISTENCE
+     ══════════════════════════════════════ */
+  function loadSettings() {
+    try {
+      var d = JSON.parse(localStorage.getItem('rnav'));
+      if (d) {
+        if (d.lat != null) S.targetLat = d.lat;
+        if (d.lng != null) S.targetLng = d.lng;
+        if (d.sm != null) S.smoothing = d.sm;
+        if (d.ba != null) S.barrier = d.ba;
+      }
+    } catch(e) {}
+  }
+
+  function saveSettings() {
+    localStorage.setItem('rnav', JSON.stringify({
+      lat: S.targetLat, lng: S.targetLng,
+      sm: S.smoothing, ba: S.barrier
+    }));
+  }
+
+  /* ══════════════════════════════════════
+     DOM
+     ══════════════════════════════════════ */
+  var canvas   = document.getElementById('radar-canvas');
+  var ctx      = canvas.getContext('2d');
+  var distEl   = document.getElementById('distance-value');
+  var startBtn = document.getElementById('start-btn');
+  var recalBtn = document.getElementById('recalibrate-btn');
+  var statusEl = document.getElementById('status');
+
+  // admin
+  var adminBtn   = document.getElementById('admin-btn');
+  var overlay    = document.getElementById('admin-overlay');
+  var btnSave    = document.getElementById('btn-save');
+  var btnClose   = document.getElementById('btn-close');
+  var inpLat     = document.getElementById('inp-lat');
+  var inpLng     = document.getElementById('inp-lng');
+  var inpSmooth  = document.getElementById('inp-smooth');
+  var rvSmooth   = document.getElementById('rv-smooth');
+  var inpBarrier = document.getElementById('inp-barrier');
+  var rvBarrier  = document.getElementById('rv-barrier');
+
+  /* ══════════════════════════════════════
+     CANVAS SIZING
+     ══════════════════════════════════════ */
+  var R, cx, cy, dotR;
+
+  function sizeCanvas() {
+    var maxW = window.innerWidth - 40;
+    var maxH = window.innerHeight - 300;
+    var sz = Math.max(220, Math.min(maxW, maxH, 420));
+    var dpr = window.devicePixelRatio || 1;
+    canvas.width  = sz * dpr;
+    canvas.height = sz * dpr;
+    canvas.style.width  = sz + 'px';
+    canvas.style.height = sz + 'px';
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    R    = (sz / 2) - 22;
+    cx   = sz / 2;
+    cy   = sz / 2;
+    dotR = Math.max(7, sz * 0.022);
+  }
+
+  /* ══════════════════════════════════════
+     DRAWING
+     ══════════════════════════════════════ */
+  function draw() {
+    var w = parseFloat(canvas.style.width);
+    var h = parseFloat(canvas.style.height);
+    ctx.clearRect(0, 0, w, h);
+
+    // ── concentric rings ──
+    var i;
+    for (i = 1; i <= 4; i++) {
+      ctx.beginPath();
+      ctx.arc(cx, cy, (R / 4) * i, 0, Math.PI * 2);
+      if (i === 4) {
+        ctx.strokeStyle = '#444';
+        ctx.lineWidth = 1.5;
+      } else {
+        ctx.strokeStyle = '#222';
+        ctx.lineWidth = 0.5;
+      }
+      ctx.stroke();
+    }
+
+    // ── crosshairs ──
+    ctx.strokeStyle = '#1e1e1e';
+    ctx.lineWidth = 0.5;
+    ctx.beginPath();
+    ctx.moveTo(cx, cy - R); ctx.lineTo(cx, cy + R);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(cx - R, cy); ctx.lineTo(cx + R, cy);
+    ctx.stroke();
+
+    // ── diagonal crosshairs ──
+    var d45 = R * 0.707;
+    ctx.strokeStyle = '#191919';
+    ctx.beginPath();
+    ctx.moveTo(cx - d45, cy - d45); ctx.lineTo(cx + d45, cy + d45);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(cx + d45, cy - d45); ctx.lineTo(cx - d45, cy + d45);
+    ctx.stroke();
+
+    // ── sweep line ──
+    if (S.active) {
+      ctx.save();
+      ctx.translate(cx, cy);
+      ctx.rotate(S.sweep);
+      var sg = ctx.createLinearGradient(0, 0, R, 0);
+      sg.addColorStop(0, 'rgba(255,59,59,0.20)');
+      sg.addColorStop(1, 'rgba(255,59,59,0)');
+      ctx.strokeStyle = sg;
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(0, 0); ctx.lineTo(R, 0);
+      ctx.stroke();
+
+      // sweep trail
+      for (var t = 1; t <= 8; t++) {
+        ctx.rotate(-0.04);
+        var a = 0.15 - t * 0.016;
+        if (a <= 0) break;
+        var tg = ctx.createLinearGradient(0, 0, R, 0);
+        tg.addColorStop(0, 'rgba(255,59,59,' + a + ')');
+        tg.addColorStop(1, 'rgba(255,59,59,0)');
+        ctx.strokeStyle = tg;
+        ctx.beginPath();
+        ctx.moveTo(0, 0); ctx.lineTo(R, 0);
+        ctx.stroke();
+      }
+      ctx.restore();
+    }
+
+    // ── center user marker ──
+    ctx.beginPath();
+    ctx.arc(cx, cy, 4, 0, Math.PI * 2);
+    ctx.fillStyle = '#fff';
+    ctx.fill();
+    // small ring
+    ctx.beginPath();
+    ctx.arc(cx, cy, 8, 0, Math.PI * 2);
+    ctx.strokeStyle = 'rgba(255,255,255,0.2)';
+    ctx.lineWidth = 1;
+    ctx.stroke();
+
+    // ── forward indicator (small triangle at top) ──
+    ctx.beginPath();
+    ctx.moveTo(cx, cy - R - 12);
+    ctx.lineTo(cx - 5, cy - R - 4);
+    ctx.lineTo(cx + 5, cy - R - 4);
+    ctx.closePath();
+    ctx.fillStyle = '#444';
+    ctx.fill();
+
+    // ── target dot ──
+    if (S.active && S.userLat !== null) {
+      var aRad = S.displayAngle * (Math.PI / 180);
+      var tx = cx + R * Math.sin(aRad);
+      var ty = cy - R * Math.cos(aRad);
+
+      // outer glow
+      var glow = ctx.createRadialGradient(tx, ty, 0, tx, ty, dotR + 14);
+      glow.addColorStop(0, 'rgba(255,59,59,0.25)');
+      glow.addColorStop(1, 'rgba(255,59,59,0)');
+      ctx.beginPath();
+      ctx.arc(tx, ty, dotR + 14, 0, Math.PI * 2);
+      ctx.fillStyle = glow;
+      ctx.fill();
+
+      // pulse ring
+      var pulse = 0.5 + 0.5 * Math.sin(Date.now() / 350);
+      ctx.beginPath();
+      ctx.arc(tx, ty, dotR + 3 + pulse * 5, 0, Math.PI * 2);
+      ctx.strokeStyle = 'rgba(255,59,59,' + (0.35 - pulse * 0.25).toFixed(2) + ')';
+      ctx.lineWidth = 1;
+      ctx.stroke();
+
+      // dot
+      ctx.beginPath();
+      ctx.arc(tx, ty, dotR, 0, Math.PI * 2);
+      ctx.fillStyle = '#ff3b3b';
+      ctx.fill();
+
+      // bright center
+      ctx.beginPath();
+      ctx.arc(tx, ty, dotR * 0.35, 0, Math.PI * 2);
+      ctx.fillStyle = 'rgba(255,255,255,0.5)';
+      ctx.fill();
+    }
+  }
+
+  /* ══════════════════════════════════════
+     ANGLE MATH
+     ══════════════════════════════════════ */
+
+  // Returns value in -180..180
+  function relAngle(target, device) {
+    return ((target - device + 540) % 360) - 180;
+  }
+
+  // Shortest delta from → to, in -180..180
+  function shortDelta(from, to) {
+    var d = to - from;
+    while (d > 180)  d -= 360;
+    while (d < -180) d += 360;
+    return d;
+  }
+
+  /* ══════════════════════════════════════
+     NAVIGATION UPDATE
+     ══════════════════════════════════════ */
+  function updateNav() {
+    if (!S.active || S.userLat === null) return;
+
+    var uPt = turf.point([S.userLng, S.userLat]);
+    var tPt = turf.point([S.targetLng, S.targetLat]);
+
+    // distance (km)
+    var dKm = turf.distance(uPt, tPt);
+    S.distance = dKm;
+
+    if (dKm < 1) {
+      distEl.textContent = Math.round(dKm * 1000) + ' m';
+    } else {
+      distEl.textContent = dKm.toFixed(2) + ' km';
+    }
+
+    // target bearing (normalized 0-360)
+    var tBear = turf.bearing(uPt, tPt);
+    tBear = (tBear + 360) % 360;
+
+    // relative angle (CRITICAL: wraps correctly across 0/360)
+    var rel = relAngle(tBear, S.deviceHeading);
+
+    // barrier-based smoothing
+    var absRel = Math.abs(rel);
+    var factor;
+    if (absRel <= S.barrier) {
+      // inside barrier → normal smooth (~0.5s)
+      factor = S.smoothing;
+    } else {
+      // outside barrier → heavy damp (~2s)
+      factor = S.smoothing * 0.12;
+    }
+
+    // smooth display angle
+    var delta = shortDelta(S.displayAngle, rel);
+    S.displayAngle += delta * factor;
+
+    // clamp to -180..180
+    if (S.displayAngle > 180)  S.displayAngle -= 360;
+    if (S.displayAngle < -180) S.displayAngle += 360;
+  }
+
+  /* ══════════════════════════════════════
+     MOVEMENT HEADING
+     ══════════════════════════════════════ */
+  function updateMovementHeading() {
+    if (S.prevLat === null || S.userLat === null) return;
+    var p1 = turf.point([S.prevLng, S.prevLat]);
+    var p2 = turf.point([S.userLng, S.userLat]);
+    var dist = turf.distance(p1, p2) * 1000;
+    if (dist > 2) {
+      var mh = turf.bearing(p1, p2);
+      S.movementHeading = (mh + 360) % 360;
+    }
+  }
+
+  /* ══════════════════════════════════════
+     GEOLOCATION
+     ══════════════════════════════════════ */
+  function startGeo() {
+    if (!navigator.geolocation) {
+      statusEl.textContent = 'Geolocation not supported';
+      return;
+    }
+    S.watchId = navigator.geolocation.watchPosition(
+      function(pos) {
+        S.prevLat = S.userLat;
+        S.prevLng = S.userLng;
+        S.userLat = pos.coords.latitude;
+        S.userLng = pos.coords.longitude;
+
+        updateMovementHeading();
+
+        // fallback: if no orientation sensor, use movement heading
+        if (!S.hasOrientation && S.movementHeading !== null) {
+          S.deviceHeading = S.movementHeading;
+        }
+
+        statusEl.textContent = 'GPS active · ±' + Math.round(pos.coords.accuracy) + 'm';
+      },
+      function(err) {
+        statusEl.textContent = 'GPS error: ' + err.message;
+      },
+      { enableHighAccuracy: true, maximumAge: 0, timeout: 5000 }
+    );
+  }
+
+  function stopGeo() {
+    if (S.watchId !== null) {
+      navigator.geolocation.clearWatch(S.watchId);
+      S.watchId = null;
+    }
+  }
+
+  /* ══════════════════════════════════════
+     DEVICE ORIENTATION
+     ══════════════════════════════════════ */
+  function onOrientation(e) {
+    if (e.alpha === null) return;
+    S.hasOrientation = true;
+
+    var h;
+    if (e.webkitCompassHeading !== undefined) {
+      h = e.webkitCompassHeading;
+    } else {
+      h = (360 - e.alpha) % 360;
+    }
+
+    h = (h + S.headingOffset + 360) % 360;
+    S.deviceHeading = h;
+  }
+
+  function startOrientation() {
+    if (typeof DeviceOrientationEvent !== 'undefined' &&
+        typeof DeviceOrientationEvent.requestPermission === 'function') {
+      DeviceOrientationEvent.requestPermission()
+        .then(function(r) {
+          if (r === 'granted') {
+            window.addEventListener('deviceorientation', onOrientation, true);
+          } else {
+            statusEl.textContent = 'Orientation permission denied';
+          }
+        })
+        .catch(function() {
+          statusEl.textContent = 'Orientation error';
+        });
+    } else {
+      window.addEventListener('deviceorientation', onOrientation, true);
+    }
+  }
+
+  function stopOrientation() {
+    window.removeEventListener('deviceorientation', onOrientation, true);
+    S.hasOrientation = false;
+  }
+
+  /* ══════════════════════════════════════
+     ANIMATION LOOP
+     ══════════════════════════════════════ */
+  function tick() {
+    updateNav();
+    if (S.active) {
+      S.sweep += 0.018;
+      if (S.sweep > Math.PI * 2) S.sweep -= Math.PI * 2;
+    }
+    draw();
+    requestAnimationFrame(tick);
+  }
+
+  /* ══════════════════════════════════════
+     CONTROLS
+     ══════════════════════════════════════ */
+  startBtn.addEventListener('click', function() {
+    if (!S.active) {
+      S.active = true;
+      S.displayAngle = 0;
+      startBtn.textContent = 'Stop Navigation';
+      startBtn.classList.add('running');
+      startGeo();
+      startOrientation();
+      statusEl.textContent = 'Acquiring GPS…';
+    } else {
+      S.active = false;
+      startBtn.textContent = 'Start Navigation';
+      startBtn.classList.remove('running');
+      stopGeo();
+      stopOrientation();
+      distEl.textContent = '---';
+      S.userLat = S.userLng = S.prevLat = S.prevLng = null;
+      S.movementHeading = null;
+      statusEl.textContent = 'Navigation stopped';
+    }
+  });
+
+  recalBtn.addEventListener('click', function() {
+    S.headingOffset = 0;
+    S.displayAngle = 0;
+    if (S.movementHeading !== null && S.hasOrientation) {
+      var rawH = (360 - S.deviceHeading + S.headingOffset + 360) % 360;
+      S.headingOffset = S.movementHeading - rawH;
+    }
+    statusEl.textContent = 'Recalibrated';
+    setTimeout(function() {
+      if (S.active) statusEl.textContent = 'GPS active';
+    }, 1500);
+  });
+
+  /* ══════════════════════════════════════
+     ADMIN PANEL
+     ══════════════════════════════════════ */
+  adminBtn.addEventListener('click', function() {
+    inpLat.value = S.targetLat;
+    inpLng.value = S.targetLng;
+    inpSmooth.value = S.smoothing;
+    rvSmooth.textContent = S.smoothing.toFixed(2);
+    inpBarrier.value = S.barrier;
+    rvBarrier.textContent = '±' + S.barrier + '°';
+    overlay.classList.add('open');
+  });
+
+  btnClose.addEventListener('click', function() {
+    overlay.classList.remove('open');
+  });
+
+  inpSmooth.addEventListener('input', function() {
+    rvSmooth.textContent = parseFloat(this.value).toFixed(2);
+  });
+
+  inpBarrier.addEventListener('input', function() {
+    rvBarrier.textContent = '±' + this.value + '°';
+  });
+
+  btnSave.addEventListener('click', function() {
+    var la = parseFloat(inpLat.value);
+    var ln = parseFloat(inpLng.value);
+    if (!isNaN(la) && !isNaN(ln)) {
+      S.targetLat = la;
+      S.targetLng = ln;
+    }
+    S.smoothing = parseFloat(inpSmooth.value);
+    S.barrier   = parseInt(inpBarrier.value, 10);
+    saveSettings();
+    overlay.classList.remove('open');
+    statusEl.textContent = 'Settings saved';
+    setTimeout(function() {
+      if (S.active) statusEl.textContent = 'GPS active';
+    }, 1500);
+  });
+
+  /* ══════════════════════════════════════
+     INIT
+     ══════════════════════════════════════ */
+  loadSettings();
+  sizeCanvas();
+  window.addEventListener('resize', sizeCanvas);
+  tick();
+})();
+</script>
+</body>
+</html>
