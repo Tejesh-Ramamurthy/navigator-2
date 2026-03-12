@@ -3,867 +3,708 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<title>Radar Navigator</title>
+<title>Navigate</title>
 <script src="https://cdn.jsdelivr.net/npm/@turf/turf@6/turf.min.js"></script>
 <style>
-*, *::before, *::after {
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
-}
-
-html, body {
-  height: 100%;
-  overflow: hidden;
-  touch-action: manipulation;
-}
-
-body {
-  background: #111;
-  color: #fff;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  user-select: none;
-  -webkit-user-select: none;
-}
-
-/* ── Admin Button ── */
-#admin-btn {
-  position: fixed;
-  top: 14px;
-  right: 14px;
-  background: transparent;
-  color: #555;
-  border: 1px solid #333;
-  padding: 7px 14px;
-  border-radius: 14px;
-  font-size: 11px;
-  letter-spacing: 0.5px;
-  cursor: pointer;
-  z-index: 50;
-  transition: border-color 0.2s, color 0.2s;
-}
-
-#admin-btn:active {
-  border-color: #666;
-  color: #999;
-}
-
-/* ── Distance Display ── */
-#distance-section {
-  margin-top: 54px;
-  text-align: center;
-}
-
-#distance-section .label {
-  font-size: 11px;
-  color: #666;
-  text-transform: uppercase;
-  letter-spacing: 2.5px;
-}
-
-#distance-value {
-  font-size: 52px;
-  font-weight: 200;
-  margin-top: 6px;
-  font-variant-numeric: tabular-nums;
-  line-height: 1;
-  min-height: 56px;
-}
-
-/* ── Calibration Notice ── */
-#calibration-notice {
-  display: none;
-  margin-top: 10px;
-  font-size: 12px;
-  color: #ff3b3b;
-  letter-spacing: 0.5px;
-  text-align: center;
-  animation: pulse-text 1.2s ease-in-out infinite;
-}
-
-#calibration-notice.show {
-  display: block;
-}
-
-@keyframes pulse-text {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.4; }
-}
-
-/* ── Radar ── */
-#radar-wrap {
-  position: relative;
-  margin-top: 24px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-#radar-container {
-  position: relative;
-}
-
-#radar-canvas {
-  display: block;
-}
-
-/* ── Target Dot (DOM element, lerped via JS) ── */
-#target-dot {
-  display: none;
-  position: absolute;
-  width: 16px;
-  height: 16px;
-  border-radius: 50%;
-  background: #ff3b3b;
-  box-shadow: 0 0 12px 3px rgba(255, 59, 59, 0.4),
-              0 0 24px 6px rgba(255, 59, 59, 0.15);
-  pointer-events: none;
-  z-index: 10;
-  transform: translate(-50%, -50%);
-}
-
-#target-dot.show {
-  display: block;
-}
-
-/* Pulse ring on the dot */
-#target-dot::after {
-  content: '';
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  width: 28px;
-  height: 28px;
-  border-radius: 50%;
-  border: 1px solid rgba(255, 59, 59, 0.35);
-  transform: translate(-50%, -50%);
-  animation: dot-pulse 1.8s ease-out infinite;
-}
-
-@keyframes dot-pulse {
-  0% { width: 16px; height: 16px; opacity: 0.6; }
-  100% { width: 36px; height: 36px; opacity: 0; }
-}
-
-/* ── Controls ── */
-#controls {
-  margin-top: 32px;
-  display: flex;
-  gap: 14px;
-}
-
-.btn {
-  background: transparent;
-  color: #ccc;
-  border: 1px solid #444;
-  padding: 13px 30px;
-  border-radius: 26px;
-  font-size: 13px;
-  cursor: pointer;
-  transition: background 0.2s, border-color 0.2s, color 0.2s;
-  letter-spacing: 0.3px;
-}
-
-.btn:active {
-  background: rgba(255, 255, 255, 0.06);
-}
-
-.btn.running {
-  border-color: #ff3b3b;
-  color: #ff3b3b;
-}
-
-/* ── Status ── */
-#status {
-  position: fixed;
-  bottom: 20px;
-  font-size: 10px;
-  color: #333;
-  letter-spacing: 0.5px;
-  text-align: center;
-  padding: 0 20px;
-}
-
-/* ── Admin Panel ── */
-#admin-overlay {
-  display: none;
-  position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.94);
-  z-index: 200;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 28px;
-}
-
-#admin-overlay.open {
-  display: flex;
-}
-
-#admin-overlay h2 {
-  font-size: 18px;
-  font-weight: 300;
-  margin-bottom: 28px;
-  color: #aaa;
-  letter-spacing: 1px;
-}
-
-.field {
-  width: 100%;
-  max-width: 300px;
-  margin-bottom: 18px;
-}
-
-.field label {
-  display: block;
-  font-size: 10px;
-  color: #666;
-  text-transform: uppercase;
-  letter-spacing: 1.5px;
-  margin-bottom: 5px;
-}
-
-.field input[type="number"] {
-  width: 100%;
-  background: #1a1a1a;
-  border: 1px solid #333;
-  color: #fff;
-  padding: 11px 14px;
-  border-radius: 8px;
-  font-size: 15px;
-  outline: none;
-  -webkit-appearance: none;
-}
-
-.field input[type="number"]:focus {
-  border-color: #555;
-}
-
-.field input[type="range"] {
-  width: 100%;
-  accent-color: #ff3b3b;
-  margin-top: 2px;
-}
-
-.field .rv {
-  font-size: 12px;
-  color: #777;
-  margin-top: 3px;
-  text-align: right;
-}
-
-#admin-btns {
-  display: flex;
-  gap: 12px;
-  margin-top: 12px;
-}
+  @import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=Syne:wght@400;700;800&display=swap');
+  :root {
+    --bg: #0a0a0a;
+    --surface: #111;
+    --border: #222;
+    --accent: #ff3b3b;
+    --accent-dim: rgba(255,59,59,0.15);
+    --text: #e8e8e8;
+    --text-dim: #555;
+    --radar-bg: #0d0d0d;
+    --radar-ring: #1a1a1a;
+    --radar-border: #2a2a2a;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body {
+    height: 100%;
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Mono', monospace;
+    overflow: hidden;
+    user-select: none;
+  }
+  /* ── PERMISSION OVERLAY ── */
+  #permission-overlay {
+    position: fixed;
+    inset: 0;
+    background: var(--bg);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    z-index: 100;
+    gap: 0;
+    padding: 32px;
+  }
+  .perm-icon {
+    width: 72px;
+    height: 72px;
+    border-radius: 50%;
+    background: var(--accent-dim);
+    border: 1px solid var(--accent);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 28px;
+  }
+  .perm-icon svg {
+    width: 32px;
+    height: 32px;
+    stroke: var(--accent);
+    fill: none;
+    stroke-width: 1.5;
+  }
+  .perm-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 22px;
+    font-weight: 800;
+    letter-spacing: -0.5px;
+    margin-bottom: 12px;
+    text-align: center;
+  }
+  .perm-desc {
+    font-size: 12px;
+    color: var(--text-dim);
+    text-align: center;
+    line-height: 1.7;
+    max-width: 280px;
+    margin-bottom: 36px;
+  }
+  .perm-desc span {
+    color: #888;
+  }
+  .btn-primary {
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    border-radius: 12px;
+    padding: 16px 40px;
+    font-family: 'DM Mono', monospace;
+    font-size: 13px;
+    font-weight: 500;
+    letter-spacing: 0.05em;
+    cursor: pointer;
+    transition: opacity 0.2s, transform 0.15s;
+    width: 100%;
+    max-width: 280px;
+  }
+  .btn-primary:active { opacity: 0.8; transform: scale(0.98); }
+  .perm-note {
+    margin-top: 16px;
+    font-size: 10px;
+    color: var(--text-dim);
+    text-align: center;
+    line-height: 1.6;
+  }
+  .perm-error {
+    margin-top: 16px;
+    font-size: 11px;
+    color: var(--accent);
+    text-align: center;
+    display: none;
+  }
+  /* ── MAIN APP ── */
+  #app {
+    display: none;
+    flex-direction: column;
+    height: 100%;
+    position: relative;
+  }
+  /* top bar */
+  .topbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 20px 20px 8px;
+    flex-shrink: 0;
+  }
+  .app-wordmark {
+    font-family: 'Syne', sans-serif;
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--text-dim);
+  }
+  .btn-admin {
+    background: none;
+    border: 1px solid var(--border);
+    color: var(--text-dim);
+    border-radius: 8px;
+    padding: 6px 12px;
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    cursor: pointer;
+    transition: border-color 0.2s, color 0.2s;
+  }
+  .btn-admin:hover { border-color: #444; color: var(--text); }
+  /* distance */
+  .distance-block {
+    text-align: center;
+    padding: 12px 20px 0;
+    flex-shrink: 0;
+  }
+  .distance-label {
+    font-size: 9px;
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    margin-bottom: 4px;
+  }
+  .distance-value {
+    font-family: 'Syne', sans-serif;
+    font-size: 42px;
+    font-weight: 800;
+    letter-spacing: -2px;
+    line-height: 1;
+    color: var(--text);
+    transition: color 0.3s;
+  }
+  .distance-unit {
+    font-family: 'DM Mono', monospace;
+    font-size: 12px;
+    font-weight: 300;
+    color: var(--text-dim);
+    margin-top: 2px;
+  }
+  /* radar */
+  .radar-wrap {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+  }
+  .radar-container {
+    position: relative;
+    width: min(70vw, 70vh, 320px);
+    aspect-ratio: 1;
+  }
+  .radar-svg {
+    width: 100%;
+    height: 100%;
+    overflow: visible;
+  }
+  /* status bar */
+  .status-bar {
+    text-align: center;
+    padding: 0 20px 12px;
+    flex-shrink: 0;
+  }
+  .status-text {
+    font-size: 10px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    min-height: 14px;
+  }
+  .status-text.active { color: #4caf7d; }
+  .status-text.warning { color: #ff9800; }
+  /* bottom controls */
+  .controls {
+    display: flex;
+    gap: 10px;
+    padding: 12px 20px 32px;
+    flex-shrink: 0;
+  }
+  .btn-nav {
+    flex: 1;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    color: var(--text);
+    border-radius: 12px;
+    padding: 14px;
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    cursor: pointer;
+    transition: background 0.2s, border-color 0.2s;
+  }
+  .btn-nav:active { background: #181818; }
+  .btn-nav.primary {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: #fff;
+  }
+  .btn-nav.primary:active { opacity: 0.85; }
+  /* ── ADMIN PANEL ── */
+  #admin-panel {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.85);
+    display: none;
+    align-items: flex-end;
+    z-index: 50;
+    backdrop-filter: blur(4px);
+  }
+  #admin-panel.open { display: flex; }
+  .admin-sheet {
+    background: #141414;
+    border: 1px solid var(--border);
+    border-bottom: none;
+    border-radius: 20px 20px 0 0;
+    padding: 28px 24px 48px;
+    width: 100%;
+    max-width: 480px;
+    margin: 0 auto;
+  }
+  .admin-handle {
+    width: 36px;
+    height: 3px;
+    background: var(--border);
+    border-radius: 2px;
+    margin: 0 auto 24px;
+  }
+  .admin-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 16px;
+    font-weight: 700;
+    margin-bottom: 20px;
+  }
+  .field-group {
+    margin-bottom: 16px;
+  }
+  .field-label {
+    font-size: 9px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    margin-bottom: 6px;
+    display: block;
+  }
+  .field-input {
+    width: 100%;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 10px 12px;
+    color: var(--text);
+    font-family: 'DM Mono', monospace;
+    font-size: 13px;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+  .field-input:focus { border-color: #444; }
+  .slider-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .field-slider {
+    flex: 1;
+    accent-color: var(--accent);
+    height: 3px;
+    cursor: pointer;
+  }
+  .slider-val {
+    font-size: 11px;
+    color: var(--text-dim);
+    min-width: 32px;
+    text-align: right;
+  }
+  .admin-save {
+    margin-top: 24px;
+    width: 100%;
+    background: var(--accent);
+    border: none;
+    border-radius: 12px;
+    padding: 14px;
+    color: #fff;
+    font-family: 'DM Mono', monospace;
+    font-size: 12px;
+    letter-spacing: 0.08em;
+    cursor: pointer;
+  }
 </style>
 </head>
 <body>
 
-<button id="admin-btn">Admin</button>
-
-<div id="distance-section">
-  <div class="label">Distance to Target</div>
-  <div id="distance-value">---</div>
-</div>
-
-<div id="calibration-notice">Calibrating compass…</div>
-
-<div id="radar-wrap">
-  <div id="radar-container">
-    <canvas id="radar-canvas"></canvas>
-    <div id="target-dot"></div>
+<!-- ── PERMISSION OVERLAY ── -->
+<div id="permission-overlay">
+  <div class="perm-icon">
+    <svg viewBox="0 0 24 24">
+      <circle cx="12" cy="12" r="3"/>
+      <path d="M12 2v3M12 19v3M2 12h3M19 12h3"/>
+      <path d="M5.6 5.6l2.1 2.1M16.3 16.3l2.1 2.1M5.6 18.4l2.1-2.1M16.3 7.7l2.1-2.1"/>
+    </svg>
+  </div>
+  <div class="perm-title">Compass Access</div>
+  <div class="perm-desc">
+    This app needs access to your device's <span>motion &amp; orientation sensors</span> to show you the direction to the destination.
+  </div>
+  <button class="btn-primary" id="btn-grant">Enable Navigation</button>
+  <div class="perm-note">
+    A system prompt may appear asking to allow<br>motion &amp; orientation access. Tap <strong>Allow</strong>.
+  </div>
+  <div class="perm-error" id="perm-error">
+    Permission denied. Please allow sensor access in your browser settings and reload.
   </div>
 </div>
 
-<div id="controls">
-  <button class="btn" id="start-btn">Start Navigation</button>
-  <button class="btn" id="recalibrate-btn">Recalibrate</button>
+<!-- ── MAIN APP ── -->
+<div id="app">
+  <div class="topbar">
+    <div class="app-wordmark">Navigate</div>
+    <button class="btn-admin" id="btn-admin-open">Admin</button>
+  </div>
+  <div class="distance-block">
+    <div class="distance-label">Distance to target</div>
+    <div class="distance-value" id="dist-value">—</div>
+    <div class="distance-unit" id="dist-unit"></div>
+  </div>
+  <div class="radar-wrap">
+    <div class="radar-container">
+      <svg class="radar-svg" id="radar-svg" viewBox="0 0 300 300">
+        <!-- rings -->
+        <circle cx="150" cy="150" r="130" fill="var(--radar-bg)" stroke="var(--radar-ring)" stroke-width="1"/>
+        <circle cx="150" cy="150" r="86"  fill="none" stroke="var(--radar-ring)" stroke-width="0.5"/>
+        <circle cx="150" cy="150" r="43"  fill="none" stroke="var(--radar-ring)" stroke-width="0.5"/>
+        <!-- crosshairs -->
+        <line x1="150" y1="24" x2="150" y2="276" stroke="var(--radar-ring)" stroke-width="0.5"/>
+        <line x1="24"  y1="150" x2="276" y2="150" stroke="var(--radar-ring)" stroke-width="0.5"/>
+        <!-- outer border -->
+        <circle cx="150" cy="150" r="130" fill="none" stroke="var(--radar-border)" stroke-width="1.5"/>
+        <!-- forward tick -->
+        <line x1="150" y1="18" x2="150" y2="28" stroke="#333" stroke-width="2" stroke-linecap="round"/>
+        <!-- user dot -->
+        <circle cx="150" cy="150" r="5" fill="#fff" opacity="0.9"/>
+        <circle cx="150" cy="150" r="10" fill="none" stroke="#fff" stroke-width="0.5" opacity="0.3"/>
+        <!-- target dot (updated by JS) -->
+        <circle id="target-dot" cx="150" cy="20" r="7" fill="var(--accent)"/>
+        <circle id="target-glow" cx="150" cy="20" r="12" fill="var(--accent)" opacity="0.2"/>
+      </svg>
+    </div>
+  </div>
+  <div class="status-bar">
+    <div class="status-text" id="status-text">Waiting to start</div>
+  </div>
+  <div class="controls">
+    <button class="btn-nav" id="btn-recal">Recalibrate</button>
+    <button class="btn-nav primary" id="btn-start">Start Navigation</button>
+  </div>
 </div>
 
-<div id="status">Waiting to start</div>
-
-<!-- Admin Panel -->
-<div id="admin-overlay">
-  <h2>Configuration</h2>
-  <div class="field">
-    <label>Target Latitude</label>
-    <input type="number" id="inp-lat" step="0.000001" placeholder="40.748817">
-  </div>
-  <div class="field">
-    <label>Target Longitude</label>
-    <input type="number" id="inp-lng" step="0.000001" placeholder="-73.985428">
-  </div>
-  <div class="field">
-    <label>Smoothing Factor (α)</label>
-    <input type="range" id="inp-smooth" min="0.02" max="0.5" step="0.01" value="0.1">
-    <div class="rv" id="rv-smooth">0.10</div>
-  </div>
-  <div class="field">
-    <label>Outlier Threshold (±degrees)</label>
-    <input type="range" id="inp-outlier" min="10" max="120" step="1" value="45">
-    <div class="rv" id="rv-outlier">±45°</div>
-  </div>
-  <div id="admin-btns">
-    <button class="btn" id="btn-save">Save</button>
-    <button class="btn" id="btn-close">Close</button>
+<!-- ── ADMIN PANEL ── -->
+<div id="admin-panel">
+  <div class="admin-sheet">
+    <div class="admin-handle"></div>
+    <div class="admin-title">Admin Settings</div>
+    <div class="field-group">
+      <label class="field-label">Target Latitude</label>
+      <input class="field-input" id="inp-lat" type="number" step="any" placeholder="e.g. 12.9716">
+    </div>
+    <div class="field-group">
+      <label class="field-label">Target Longitude</label>
+      <input class="field-input" id="inp-lng" type="number" step="any" placeholder="e.g. 77.5946">
+    </div>
+    <div class="field-group">
+      <label class="field-label">Smoothing Factor (α) — <span id="lbl-smooth">0.1</span></label>
+      <div class="slider-row">
+        <input class="field-slider" id="sl-smooth" type="range" min="0.01" max="0.5" step="0.01" value="0.1">
+        <span class="slider-val" id="sv-smooth">0.10</span>
+      </div>
+    </div>
+    <div class="field-group">
+      <label class="field-label">Outlier Threshold (°) — <span id="lbl-outlier">45</span></label>
+      <div class="slider-row">
+        <input class="field-slider" id="sl-outlier" type="range" min="10" max="120" step="5" value="45">
+        <span class="slider-val" id="sv-outlier">45°</span>
+      </div>
+    </div>
+    <button class="admin-save" id="btn-admin-save">Save &amp; Close</button>
   </div>
 </div>
 
 <script>
-(function () {
-  'use strict';
+// ── State ──────────────────────────────────────────────────────────────────
+let targetLat    = parseFloat(localStorage.getItem('targetLat'))    || 12.9716;
+let targetLng    = parseFloat(localStorage.getItem('targetLng'))    || 77.5946;
+let smoothFactor = parseFloat(localStorage.getItem('smoothFactor')) || 0.1;
+let outlierThresh= parseFloat(localStorage.getItem('outlierThresh'))|| 45;
 
-  /* ══════════════════════════════════════
-     STATE
-     ══════════════════════════════════════ */
-  var S = {
-    active: false,
+let userLat = null, userLng = null;
+let smoothedHeading  = null;
+let prevRawHeading   = null;
+let navigating       = false;
+let warmingUp        = false;
+let sensorGranted    = false;
+let countdownInterval = null;
+let nextRecalIn      = 30;
 
-    // GPS
-    userLat: null,
-    userLng: null,
-    watchId: null,
+const RADAR_CX = 150, RADAR_CY = 150, RADAR_R = 130;
 
-    // Compass
-    rawHeading: null,
-    previousHeading: null,
-    smoothedHeading: 0,
-    hasCompass: false,
+// ── DOM ────────────────────────────────────────────────────────────────────
+const overlay    = document.getElementById('permission-overlay');
+const appEl      = document.getElementById('app');
+const btnGrant   = document.getElementById('btn-grant');
+const permError  = document.getElementById('perm-error');
+const distVal    = document.getElementById('dist-value');
+const distUnit   = document.getElementById('dist-unit');
+const statusText = document.getElementById('status-text');
+const targetDot  = document.getElementById('target-dot');
+const targetGlow = document.getElementById('target-glow');
+const btnStart   = document.getElementById('btn-start');
+const btnRecal   = document.getElementById('btn-recal');
+const btnAdmOpen = document.getElementById('btn-admin-open');
+const adminPanel = document.getElementById('admin-panel');
+const btnAdmSave = document.getElementById('btn-admin-save');
+const inpLat     = document.getElementById('inp-lat');
+const inpLng     = document.getElementById('inp-lng');
+const slSmooth   = document.getElementById('sl-smooth');
+const slOutlier  = document.getElementById('sl-outlier');
+const svSmooth   = document.getElementById('sv-smooth');
+const svOutlier  = document.getElementById('sv-outlier');
 
-    // Calibration warm-up
-    calibrating: false,
-    calibrationTimer: null,
+// ── iOS Permission Handling ────────────────────────────────────────────────
+function needsIOSPermission() {
+  return typeof DeviceOrientationEvent !== 'undefined'
+    && typeof DeviceOrientationEvent.requestPermission === 'function';
+}
 
-    // Target
-    targetLat: 40.748817,
-    targetLng: -73.985428,
-
-    // Settings
-    smoothingFactor: 0.1,
-    outlierThreshold: 45,
-    lerpSpeed: 0.08,
-
-    // Computed
-    targetBearing: 0,
-    relativeAngle: 0,
-    distance: null,
-
-    // Dot lerp position (pixel coords within radar-container)
-    currentDotX: 0,
-    currentDotY: 0,
-    targetDotX: 0,
-    targetDotY: 0,
-
-    // Radar sweep
-    sweep: 0
-  };
-
-  /* ══════════════════════════════════════
-     SETTINGS PERSISTENCE
-     ══════════════════════════════════════ */
-  function loadSettings() {
+async function requestSensorPermission() {
+  if (needsIOSPermission()) {
     try {
-      var d = JSON.parse(localStorage.getItem('rnav3'));
-      if (d) {
-        if (d.lat != null) S.targetLat = d.lat;
-        if (d.lng != null) S.targetLng = d.lng;
-        if (d.sf != null) S.smoothingFactor = d.sf;
-        if (d.ot != null) S.outlierThreshold = d.ot;
-      }
-    } catch (e) {}
-  }
-
-  function saveSettings() {
-    localStorage.setItem('rnav3', JSON.stringify({
-      lat: S.targetLat,
-      lng: S.targetLng,
-      sf: S.smoothingFactor,
-      ot: S.outlierThreshold
-    }));
-  }
-
-  /* ══════════════════════════════════════
-     DOM REFS
-     ══════════════════════════════════════ */
-  var canvas     = document.getElementById('radar-canvas');
-  var ctx        = canvas.getContext('2d');
-  var distEl     = document.getElementById('distance-value');
-  var startBtn   = document.getElementById('start-btn');
-  var recalBtn   = document.getElementById('recalibrate-btn');
-  var statusEl   = document.getElementById('status');
-  var calNotice  = document.getElementById('calibration-notice');
-  var dotEl      = document.getElementById('target-dot');
-  var radarCont  = document.getElementById('radar-container');
-
-  // Admin
-  var adminBtn   = document.getElementById('admin-btn');
-  var overlay    = document.getElementById('admin-overlay');
-  var btnSave    = document.getElementById('btn-save');
-  var btnClose   = document.getElementById('btn-close');
-  var inpLat     = document.getElementById('inp-lat');
-  var inpLng     = document.getElementById('inp-lng');
-  var inpSmooth  = document.getElementById('inp-smooth');
-  var rvSmooth   = document.getElementById('rv-smooth');
-  var inpOutlier = document.getElementById('inp-outlier');
-  var rvOutlier  = document.getElementById('rv-outlier');
-
-  /* ══════════════════════════════════════
-     CANVAS SIZING
-     ══════════════════════════════════════ */
-  var RAD, CX, CY, canvasSize;
-
-  function sizeCanvas() {
-    var maxW = window.innerWidth - 40;
-    var maxH = window.innerHeight - 320;
-    var sz = Math.max(220, Math.min(maxW, maxH, 420));
-    canvasSize = sz;
-    var dpr = window.devicePixelRatio || 1;
-
-    canvas.width = sz * dpr;
-    canvas.height = sz * dpr;
-    canvas.style.width = sz + 'px';
-    canvas.style.height = sz + 'px';
-    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-
-    radarCont.style.width = sz + 'px';
-    radarCont.style.height = sz + 'px';
-
-    RAD = (sz / 2) - 22;
-    CX = sz / 2;
-    CY = sz / 2;
-
-    // Reset dot to center
-    S.currentDotX = CX;
-    S.currentDotY = CY;
-    S.targetDotX = CX;
-    S.targetDotY = CY;
-  }
-
-  /* ══════════════════════════════════════
-     DRAW RADAR (canvas — static elements + sweep)
-     ══════════════════════════════════════ */
-  function drawRadar() {
-    ctx.clearRect(0, 0, canvasSize, canvasSize);
-
-    // ── Concentric rings ──
-    for (var i = 1; i <= 4; i++) {
-      ctx.beginPath();
-      ctx.arc(CX, CY, (RAD / 4) * i, 0, Math.PI * 2);
-      if (i === 4) {
-        ctx.strokeStyle = '#444';
-        ctx.lineWidth = 1.5;
-      } else {
-        ctx.strokeStyle = '#222';
-        ctx.lineWidth = 0.5;
-      }
-      ctx.stroke();
+      const result = await DeviceOrientationEvent.requestPermission();
+      return result === 'granted';
+    } catch (e) {
+      return false;
     }
+  }
+  return true; // Android / desktop — no permission needed
+}
 
-    // ── Crosshairs ──
-    ctx.strokeStyle = '#1e1e1e';
-    ctx.lineWidth = 0.5;
-    ctx.beginPath();
-    ctx.moveTo(CX, CY - RAD);
-    ctx.lineTo(CX, CY + RAD);
-    ctx.stroke();
-    ctx.beginPath();
-    ctx.moveTo(CX - RAD, CY);
-    ctx.lineTo(CX + RAD, CY);
-    ctx.stroke();
+btnGrant.addEventListener('click', async () => {
+  btnGrant.textContent = 'Requesting…';
+  btnGrant.disabled = true;
+  permError.style.display = 'none';
 
-    // ── Diagonal crosshairs ──
-    var d45 = RAD * 0.707;
-    ctx.strokeStyle = '#191919';
-    ctx.beginPath();
-    ctx.moveTo(CX - d45, CY - d45);
-    ctx.lineTo(CX + d45, CY + d45);
-    ctx.stroke();
-    ctx.beginPath();
-    ctx.moveTo(CX + d45, CY - d45);
-    ctx.lineTo(CX - d45, CY + d45);
-    ctx.stroke();
+  const granted = await requestSensorPermission();
+  if (granted) {
+    sensorGranted = true;
+    overlay.style.display = 'none';
+    appEl.style.display = 'flex';
+    startGeolocation();
+  } else {
+    permError.style.display = 'block';
+    btnGrant.textContent = 'Try Again';
+    btnGrant.disabled = false;
+  }
+});
 
-    // ── Sweep line ──
-    if (S.active) {
-      ctx.save();
-      ctx.translate(CX, CY);
-      ctx.rotate(S.sweep);
+// ── Geolocation ────────────────────────────────────────────────────────────
+function startGeolocation() {
+  if (!navigator.geolocation) {
+    setStatus('GPS not supported', '');
+    return;
+  }
+  navigator.geolocation.watchPosition(
+    pos => {
+      userLat = pos.coords.latitude;
+      userLng = pos.coords.longitude;
+      updateDistance();
+    },
+    err => setStatus('GPS unavailable', 'warning'),
+    { enableHighAccuracy: true, maximumAge: 0, timeout: 5000 }
+  );
+}
 
-      var sg = ctx.createLinearGradient(0, 0, RAD, 0);
-      sg.addColorStop(0, 'rgba(255,59,59,0.18)');
-      sg.addColorStop(1, 'rgba(255,59,59,0)');
-      ctx.strokeStyle = sg;
-      ctx.lineWidth = 1;
-      ctx.beginPath();
-      ctx.moveTo(0, 0);
-      ctx.lineTo(RAD, 0);
-      ctx.stroke();
+// ── Compass ────────────────────────────────────────────────────────────────
+function startCompass() {
+  window.addEventListener('deviceorientation', onOrientation, true);
+}
 
-      // Sweep trail
-      for (var t = 1; t <= 8; t++) {
-        ctx.rotate(-0.04);
-        var a = 0.13 - t * 0.015;
-        if (a <= 0) break;
-        var tg = ctx.createLinearGradient(0, 0, RAD, 0);
-        tg.addColorStop(0, 'rgba(255,59,59,' + a + ')');
-        tg.addColorStop(1, 'rgba(255,59,59,0)');
-        ctx.strokeStyle = tg;
-        ctx.beginPath();
-        ctx.moveTo(0, 0);
-        ctx.lineTo(RAD, 0);
-        ctx.stroke();
-      }
-      ctx.restore();
-    }
-
-    // ── Center user marker ──
-    ctx.beginPath();
-    ctx.arc(CX, CY, 4, 0, Math.PI * 2);
-    ctx.fillStyle = '#fff';
-    ctx.fill();
-
-    ctx.beginPath();
-    ctx.arc(CX, CY, 8, 0, Math.PI * 2);
-    ctx.strokeStyle = 'rgba(255,255,255,0.2)';
-    ctx.lineWidth = 1;
-    ctx.stroke();
-
-    // ── Forward indicator triangle ──
-    ctx.beginPath();
-    ctx.moveTo(CX, CY - RAD - 13);
-    ctx.lineTo(CX - 5, CY - RAD - 5);
-    ctx.lineTo(CX + 5, CY - RAD - 5);
-    ctx.closePath();
-    ctx.fillStyle = '#444';
-    ctx.fill();
+function onOrientation(e) {
+  if (!navigating || warmingUp) return;
+  if (e.alpha === null || e.alpha === undefined) {
+    setStatus('No compass data', 'warning');
+    return;
   }
 
-  /* ══════════════════════════════════════
-     WRAPAROUND-SAFE ANGLE HELPERS
-     ══════════════════════════════════════ */
+  const raw = (e.alpha + 360) % 360;
 
-  // Returns value in -180..180
-  function wrapDelta(a, b) {
-    return ((a - b + 540) % 360) - 180;
+  // Outlier rejection (wraparound-safe)
+  if (prevRawHeading !== null) {
+    let diff = Math.abs(raw - prevRawHeading);
+    if (diff > 180) diff = 360 - diff;
+    if (diff > outlierThresh) return;
+  }
+  prevRawHeading = raw;
+
+  // Low-pass filter (wraparound-safe)
+  if (smoothedHeading === null) {
+    smoothedHeading = raw;
+  } else {
+    let delta = raw - smoothedHeading;
+    if (delta > 180)  delta -= 360;
+    if (delta < -180) delta += 360;
+    smoothedHeading = (smoothedHeading + smoothFactor * delta + 360) % 360;
   }
 
-  /* ══════════════════════════════════════
-     COMPASS HEADING PROCESSING
-     ══════════════════════════════════════ */
-  function processHeading(rawDeg) {
-    // Normalize 0-360
-    rawDeg = (rawDeg + 360) % 360;
+  updateRadar();
+}
 
-    // ── Fix 1: Outlier rejection (wraparound-safe) ──
-    if (S.previousHeading !== null) {
-      var delta = wrapDelta(rawDeg, S.previousHeading);
-      if (Math.abs(delta) > S.outlierThreshold) {
-        // Reject this reading
-        return;
-      }
-    }
-    S.previousHeading = rawDeg;
+// ── Navigation ─────────────────────────────────────────────────────────────
+function startNavigation() {
+  navigating   = true;
+  warmingUp    = true;
+  smoothedHeading = null;
+  prevRawHeading  = null;
+  setStatus('Calibrating compass…', 'warning');
+  startCompass();
+  setTimeout(() => {
+    warmingUp = false;
+    startCountdown();
+  }, 3000);
+}
 
-    // ── Fix 2: Low-pass filter ──
-    // Must handle wraparound for smoothing too
-    var smoothDelta = wrapDelta(rawDeg, S.smoothedHeading);
-    S.smoothedHeading = (S.smoothedHeading + S.smoothingFactor * smoothDelta + 360) % 360;
-  }
+function recalibrate() {
+  smoothedHeading = null;
+  prevRawHeading  = null;
+  warmingUp = true;
+  stopCountdown();
+  setStatus('Recalibrating…', 'warning');
+  setTimeout(() => {
+    warmingUp = false;
+    if (navigating) startCountdown();
+  }, 3000);
+}
 
-  /* ══════════════════════════════════════
-     NAVIGATION UPDATE
-     ══════════════════════════════════════ */
-  function updateNavigation() {
-    if (!S.active || S.userLat === null || S.calibrating) return;
-
-    var userPt = turf.point([S.userLng, S.userLat]);
-    var targetPt = turf.point([S.targetLng, S.targetLat]);
-
-    // Distance
-    var dKm = turf.distance(userPt, targetPt);
-    S.distance = dKm;
-    var dMeters = dKm * 1000;
-
-    if (dMeters < 1000) {
-      distEl.textContent = Math.round(dMeters) + ' m';
+function startCountdown() {
+  nextRecalIn = 30;
+  setStatus(`Navigating · auto-recal in ${nextRecalIn}s`, 'active');
+  countdownInterval = setInterval(() => {
+    nextRecalIn--;
+    if (nextRecalIn <= 0) {
+      stopCountdown();
+      recalibrate();
     } else {
-      distEl.textContent = dKm.toFixed(2) + ' km';
+      setStatus(`Navigating · auto-recal in ${nextRecalIn}s`, 'active');
     }
+  }, 1000);
+}
 
-    // Target bearing (0-360)
-    var tBear = turf.bearing(userPt, targetPt);
-    tBear = (tBear + 360) % 360;
-    S.targetBearing = tBear;
+function stopCountdown() {
+  clearInterval(countdownInterval);
+  countdownInterval = null;
+}
 
-    // Relative angle (wraparound-safe), -180 to +180
-    S.relativeAngle = wrapDelta(tBear, S.smoothedHeading);
+// ── Radar Update ───────────────────────────────────────────────────────────
+function updateRadar() {
+  if (!navigating || warmingUp || smoothedHeading === null || userLat === null) return;
 
-    // Compute target dot pixel position on perimeter
-    var angleRad = S.relativeAngle * (Math.PI / 180);
-    S.targetDotX = CX + RAD * Math.sin(angleRad);
-    S.targetDotY = CY - RAD * Math.cos(angleRad);
+  const userPoint   = turf.point([userLng, userLat]);
+  const targetPoint = turf.point([targetLng, targetLat]);
+
+  let targetBearing = turf.bearing(userPoint, targetPoint);
+  targetBearing = (targetBearing + 360) % 360;
+
+  // Wraparound-safe relative angle (-180 to +180)
+  const relativeAngle = ((targetBearing - smoothedHeading + 540) % 360) - 180;
+  const angleRad = relativeAngle * (Math.PI / 180);
+
+  const x = RADAR_CX + RADAR_R * Math.sin(angleRad);
+  const y = RADAR_CY - RADAR_R * Math.cos(angleRad);
+
+  targetDot.setAttribute('cx',  x.toFixed(2));
+  targetDot.setAttribute('cy',  y.toFixed(2));
+  targetGlow.setAttribute('cx', x.toFixed(2));
+  targetGlow.setAttribute('cy', y.toFixed(2));
+}
+
+// ── Distance ───────────────────────────────────────────────────────────────
+function updateDistance() {
+  if (userLat === null) return;
+  const from = turf.point([userLng, userLat]);
+  const to   = turf.point([targetLng, targetLat]);
+  const dist = turf.distance(from, to) * 1000; // metres
+
+  if (dist < 1000) {
+    distVal.textContent  = Math.round(dist);
+    distUnit.textContent = 'meters';
+  } else {
+    distVal.textContent  = (dist / 1000).toFixed(2);
+    distUnit.textContent = 'kilometers';
   }
+  updateRadar();
+}
 
-  /* ══════════════════════════════════════
-     DOT LERP — Fix 3: Smooth the dot position
-     ══════════════════════════════════════ */
-  function lerpDot() {
-    S.currentDotX += S.lerpSpeed * (S.targetDotX - S.currentDotX);
-    S.currentDotY += S.lerpSpeed * (S.targetDotY - S.currentDotY);
+// ── UI Helpers ─────────────────────────────────────────────────────────────
+function setStatus(msg, type) {
+  statusText.textContent = msg;
+  statusText.className = 'status-text' + (type ? ' ' + type : '');
+}
 
-    dotEl.style.left = S.currentDotX + 'px';
-    dotEl.style.top = S.currentDotY + 'px';
+// ── Button Handlers ────────────────────────────────────────────────────────
+btnStart.addEventListener('click', () => {
+  if (!navigating) {
+    startNavigation();
+    btnStart.textContent = 'Stop';
+    btnStart.classList.remove('primary');
+  } else {
+    navigating = false;
+    stopCountdown();
+    btnStart.textContent = 'Start Navigation';
+    btnStart.classList.add('primary');
+    setStatus('Stopped', '');
   }
+});
 
-  /* ══════════════════════════════════════
-     GEOLOCATION
-     ══════════════════════════════════════ */
-  function startGeo() {
-    if (!navigator.geolocation) {
-      statusEl.textContent = 'Geolocation not supported';
-      return;
-    }
-    S.watchId = navigator.geolocation.watchPosition(
-      function (pos) {
-        S.userLat = pos.coords.latitude;
-        S.userLng = pos.coords.longitude;
-        var acc = Math.round(pos.coords.accuracy);
-        if (!S.calibrating) {
-          statusEl.textContent = 'GPS ±' + acc + 'm' + (S.hasCompass ? ' · compass active' : '');
-        }
-      },
-      function (err) {
-        statusEl.textContent = 'GPS error: ' + err.message;
-      },
-      { enableHighAccuracy: true, maximumAge: 0, timeout: 5000 }
-    );
+btnRecal.addEventListener('click', () => {
+  if (navigating) {
+    stopCountdown();
+    recalibrate();
   }
+});
 
-  function stopGeo() {
-    if (S.watchId !== null) {
-      navigator.geolocation.clearWatch(S.watchId);
-      S.watchId = null;
-    }
+// ── Admin Panel ────────────────────────────────────────────────────────────
+function loadAdminValues() {
+  inpLat.value         = targetLat;
+  inpLng.value         = targetLng;
+  slSmooth.value       = smoothFactor;
+  slOutlier.value      = outlierThresh;
+  svSmooth.textContent = smoothFactor.toFixed(2);
+  svOutlier.textContent= outlierThresh + '°';
+}
+
+btnAdmOpen.addEventListener('click', () => {
+  loadAdminValues();
+  adminPanel.classList.add('open');
+});
+
+adminPanel.addEventListener('click', e => {
+  if (e.target === adminPanel) adminPanel.classList.remove('open');
+});
+
+slSmooth.addEventListener('input', () => {
+  svSmooth.textContent = parseFloat(slSmooth.value).toFixed(2);
+});
+
+slOutlier.addEventListener('input', () => {
+  svOutlier.textContent = slOutlier.value + '°';
+});
+
+btnAdmSave.addEventListener('click', () => {
+  const lat = parseFloat(inpLat.value);
+  const lng = parseFloat(inpLng.value);
+  if (!isNaN(lat) && !isNaN(lng)) {
+    targetLat = lat;
+    targetLng = lng;
+    localStorage.setItem('targetLat', lat);
+    localStorage.setItem('targetLng', lng);
   }
-
-  /* ══════════════════════════════════════
-     DEVICE ORIENTATION (COMPASS)
-     ══════════════════════════════════════ */
-  function onDeviceOrientation(e) {
-    var heading = null;
-
-    // iOS: webkitCompassHeading gives true-north heading directly
-    if (e.webkitCompassHeading !== undefined && e.webkitCompassHeading !== null) {
-      heading = e.webkitCompassHeading;
-    }
-    // Android / others: alpha is rotation around z-axis
-    // compass heading = (360 - alpha) % 360
-    else if (e.alpha !== null && e.alpha !== undefined) {
-      heading = (360 - e.alpha) % 360;
-    }
-
-    if (heading === null) return;
-
-    S.hasCompass = true;
-    S.rawHeading = heading;
-
-    // Process through outlier rejection + low-pass filter
-    processHeading(heading);
-  }
-
-  function startCompass() {
-    // iOS permission gate
-    if (typeof DeviceOrientationEvent !== 'undefined' &&
-        typeof DeviceOrientationEvent.requestPermission === 'function') {
-      DeviceOrientationEvent.requestPermission()
-        .then(function (state) {
-          if (state === 'granted') {
-            window.addEventListener('deviceorientation', onDeviceOrientation, true);
-            window.addEventListener('deviceorientationabsolute', onDeviceOrientation, true);
-          } else {
-            statusEl.textContent = 'Compass permission denied';
-          }
-        })
-        .catch(function () {
-          statusEl.textContent = 'Compass permission error';
-        });
-    } else {
-      // Android / desktop: prefer absolute orientation
-      window.addEventListener('deviceorientationabsolute', onDeviceOrientation, true);
-      window.addEventListener('deviceorientation', onDeviceOrientation, true);
-    }
-  }
-
-  function stopCompass() {
-    window.removeEventListener('deviceorientation', onDeviceOrientation, true);
-    window.removeEventListener('deviceorientationabsolute', onDeviceOrientation, true);
-    S.hasCompass = false;
-  }
-
-  /* ══════════════════════════════════════
-     CALIBRATION WARM-UP — Fix 4
-     ══════════════════════════════════════ */
-  function beginCalibration() {
-    S.calibrating = true;
-    S.previousHeading = null;
-    calNotice.classList.add('show');
-    statusEl.textContent = 'Calibrating…';
-
-    // Reset dot to center
-    S.currentDotX = CX;
-    S.currentDotY = CY;
-    S.targetDotX = CX;
-    S.targetDotY = CY;
-
-    if (S.calibrationTimer) clearTimeout(S.calibrationTimer);
-
-    S.calibrationTimer = setTimeout(function () {
-      S.calibrating = false;
-      calNotice.classList.remove('show');
-      // Snap smoothedHeading to current raw heading for clean start
-      if (S.rawHeading !== null) {
-        S.smoothedHeading = S.rawHeading;
-        S.previousHeading = S.rawHeading;
-      }
-      statusEl.textContent = 'Navigation active';
-    }, 3000);
-  }
-
-  /* ══════════════════════════════════════
-     ANIMATION LOOP
-     ══════════════════════════════════════ */
-  function tick() {
-    // Update navigation computations
-    updateNavigation();
-
-    // Lerp the dot toward computed position
-    if (S.active && S.userLat !== null && !S.calibrating) {
-      lerpDot();
-    }
-
-    // Advance sweep
-    if (S.active) {
-      S.sweep += 0.018;
-      if (S.sweep > Math.PI * 2) S.sweep -= Math.PI * 2;
-    }
-
-    // Draw radar
-    drawRadar();
-
-    requestAnimationFrame(tick);
-  }
-
-  /* ══════════════════════════════════════
-     CONTROLS
-     ══════════════════════════════════════ */
-  startBtn.addEventListener('click', function () {
-    if (!S.active) {
-      S.active = true;
-      S.smoothedHeading = 0;
-      S.previousHeading = null;
-      S.rawHeading = null;
-      startBtn.textContent = 'Stop Navigation';
-      startBtn.classList.add('running');
-      dotEl.classList.add('show');
-      startGeo();
-      startCompass();
-      beginCalibration();
-    } else {
-      S.active = false;
-      S.calibrating = false;
-      if (S.calibrationTimer) clearTimeout(S.calibrationTimer);
-      calNotice.classList.remove('show');
-      startBtn.textContent = 'Start Navigation';
-      startBtn.classList.remove('running');
-      dotEl.classList.remove('show');
-      stopGeo();
-      stopCompass();
-      distEl.textContent = '---';
-      S.userLat = S.userLng = null;
-      S.distance = null;
-      statusEl.textContent = 'Navigation stopped';
-    }
-  });
-
-  recalBtn.addEventListener('click', function () {
-    if (!S.active) return;
-
-    // Reset smoothedHeading to current raw heading
-    if (S.rawHeading !== null) {
-      S.smoothedHeading = S.rawHeading;
-      S.previousHeading = S.rawHeading;
-    }
-
-    // Reset dot to center
-    S.currentDotX = CX;
-    S.currentDotY = CY;
-    S.targetDotX = CX;
-    S.targetDotY = CY;
-
-    // Restart warm-up
-    beginCalibration();
-  });
-
-  /* ══════════════════════════════════════
-     ADMIN PANEL
-     ══════════════════════════════════════ */
-  adminBtn.addEventListener('click', function () {
-    inpLat.value = S.targetLat;
-    inpLng.value = S.targetLng;
-    inpSmooth.value = S.smoothingFactor;
-    rvSmooth.textContent = S.smoothingFactor.toFixed(2);
-    inpOutlier.value = S.outlierThreshold;
-    rvOutlier.textContent = '±' + S.outlierThreshold + '°';
-    overlay.classList.add('open');
-  });
-
-  btnClose.addEventListener('click', function () {
-    overlay.classList.remove('open');
-  });
-
-  inpSmooth.addEventListener('input', function () {
-    rvSmooth.textContent = parseFloat(this.value).toFixed(2);
-  });
-
-  inpOutlier.addEventListener('input', function () {
-    rvOutlier.textContent = '±' + this.value + '°';
-  });
-
-  btnSave.addEventListener('click', function () {
-    var la = parseFloat(inpLat.value);
-    var ln = parseFloat(inpLng.value);
-    if (!isNaN(la) && !isNaN(ln)) {
-      S.targetLat = la;
-      S.targetLng = ln;
-    }
-    S.smoothingFactor = parseFloat(inpSmooth.value);
-    S.outlierThreshold = parseInt(inpOutlier.value, 10);
-    saveSettings();
-    overlay.classList.remove('open');
-    statusEl.textContent = 'Settings saved';
-    setTimeout(function () {
-      if (S.active) statusEl.textContent = 'Navigation active';
-    }, 1500);
-  });
-
-  /* ══════════════════════════════════════
-     INIT
-     ══════════════════════════════════════ */
-  loadSettings();
-  sizeCanvas();
-  window.addEventListener('resize', function () {
-    sizeCanvas();
-  });
-  tick();
-})();
+  smoothFactor  = parseFloat(slSmooth.value);
+  outlierThresh = parseFloat(slOutlier.value);
+  localStorage.setItem('smoothFactor', smoothFactor);
+  localStorage.setItem('outlierThresh', outlierThresh);
+  adminPanel.classList.remove('open');
+  updateDistance();
+});
 </script>
 </body>
 </html>
