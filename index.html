@@ -21,7 +21,7 @@ html, body {
 }
 
 body {
-  background: #111;
+  background: #0a0a0f;
   color: #fff;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
   display: flex;
@@ -37,8 +37,8 @@ body {
   top: 14px;
   right: 14px;
   background: transparent;
-  color: #555;
-  border: 1px solid #333;
+  color: #444;
+  border: 1px solid #222;
   padding: 7px 14px;
   border-radius: 14px;
   font-size: 11px;
@@ -49,36 +49,37 @@ body {
 }
 
 #admin-btn:active {
-  border-color: #666;
-  color: #999;
+  border-color: #555;
+  color: #888;
 }
 
 /* ── Distance Display ── */
 #distance-section {
-  margin-top: 48px;
+  margin-top: 50px;
   text-align: center;
 }
 
 #distance-section .label {
-  font-size: 11px;
-  color: #666;
+  font-size: 10px;
+  color: #555;
   text-transform: uppercase;
-  letter-spacing: 2.5px;
+  letter-spacing: 3px;
 }
 
 #distance-value {
-  font-size: 52px;
+  font-size: 54px;
   font-weight: 200;
   margin-top: 6px;
   font-variant-numeric: tabular-nums;
   line-height: 1;
-  min-height: 56px;
+  min-height: 58px;
+  color: #e0e0e0;
 }
 
 /* ── Radar ── */
 #radar-wrap {
   position: relative;
-  margin-top: 28px;
+  margin-top: 24px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -88,18 +89,39 @@ body {
   display: block;
 }
 
+/* ── Bearing Display ── */
+#bearing-section {
+  margin-top: 16px;
+  text-align: center;
+}
+
+#bearing-section .label {
+  font-size: 10px;
+  color: #444;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+}
+
+#bearing-value {
+  font-size: 22px;
+  font-weight: 300;
+  margin-top: 3px;
+  font-variant-numeric: tabular-nums;
+  color: #777;
+}
+
 /* ── Controls ── */
 #controls {
-  margin-top: 32px;
+  margin-top: 28px;
   display: flex;
   gap: 14px;
 }
 
 .btn {
   background: transparent;
-  color: #ccc;
-  border: 1px solid #444;
-  padding: 13px 30px;
+  color: #aaa;
+  border: 1px solid #333;
+  padding: 13px 28px;
   border-radius: 26px;
   font-size: 13px;
   cursor: pointer;
@@ -108,12 +130,12 @@ body {
 }
 
 .btn:active {
-  background: rgba(255,255,255,0.06);
+  background: rgba(255,255,255,0.04);
 }
 
 .btn.running {
-  border-color: #ff3b3b;
-  color: #ff3b3b;
+  border-color: #00e676;
+  color: #00e676;
 }
 
 /* ── Status ── */
@@ -121,10 +143,32 @@ body {
   position: fixed;
   bottom: 20px;
   font-size: 10px;
-  color: #333;
+  color: #2a2a2a;
   letter-spacing: 0.5px;
   text-align: center;
   padding: 0 20px;
+}
+
+/* ── Arrival Banner ── */
+#arrival-banner {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  padding: 12px 20px;
+  background: rgba(0,230,118,0.12);
+  border-bottom: 1px solid rgba(0,230,118,0.25);
+  text-align: center;
+  font-size: 14px;
+  color: #00e676;
+  font-weight: 400;
+  letter-spacing: 0.5px;
+  z-index: 40;
+}
+
+#arrival-banner.show {
+  display: block;
 }
 
 /* ── Admin Panel ── */
@@ -132,7 +176,7 @@ body {
   display: none;
   position: fixed;
   inset: 0;
-  background: rgba(0,0,0,0.94);
+  background: rgba(5,5,10,0.96);
   z-index: 200;
   flex-direction: column;
   align-items: center;
@@ -148,7 +192,7 @@ body {
   font-size: 18px;
   font-weight: 300;
   margin-bottom: 28px;
-  color: #aaa;
+  color: #888;
   letter-spacing: 1px;
 }
 
@@ -161,7 +205,7 @@ body {
 .field label {
   display: block;
   font-size: 10px;
-  color: #666;
+  color: #555;
   text-transform: uppercase;
   letter-spacing: 1.5px;
   margin-bottom: 5px;
@@ -169,8 +213,8 @@ body {
 
 .field input[type="number"] {
   width: 100%;
-  background: #1a1a1a;
-  border: 1px solid #333;
+  background: #111118;
+  border: 1px solid #2a2a2a;
   color: #fff;
   padding: 11px 14px;
   border-radius: 8px;
@@ -180,18 +224,18 @@ body {
 }
 
 .field input[type="number"]:focus {
-  border-color: #555;
+  border-color: #444;
 }
 
 .field input[type="range"] {
   width: 100%;
-  accent-color: #ff3b3b;
+  accent-color: #00e676;
   margin-top: 2px;
 }
 
 .field .rv {
   font-size: 12px;
-  color: #777;
+  color: #666;
   margin-top: 3px;
   text-align: right;
 }
@@ -201,11 +245,27 @@ body {
   gap: 12px;
   margin-top: 12px;
 }
+
+#compass-status {
+  width: 100%;
+  max-width: 300px;
+  margin-bottom: 18px;
+  padding: 10px 14px;
+  border-radius: 8px;
+  background: #111118;
+  border: 1px solid #2a2a2a;
+  font-size: 11px;
+  color: #555;
+  text-align: center;
+  letter-spacing: 0.5px;
+}
 </style>
 </head>
 <body>
 
 <button id="admin-btn">Admin</button>
+
+<div id="arrival-banner">You have arrived</div>
 
 <div id="distance-section">
   <div class="label">Distance to Target</div>
@@ -214,6 +274,11 @@ body {
 
 <div id="radar-wrap">
   <canvas id="radar-canvas"></canvas>
+</div>
+
+<div id="bearing-section">
+  <div class="label">Bearing</div>
+  <div id="bearing-value">---</div>
 </div>
 
 <div id="controls">
@@ -226,6 +291,7 @@ body {
 <!-- Admin Panel -->
 <div id="admin-overlay">
   <h2>Configuration</h2>
+  <div id="compass-status">Compass: checking…</div>
   <div class="field">
     <label>Target Latitude</label>
     <input type="number" id="inp-lat" step="0.000001" placeholder="40.748817">
@@ -236,13 +302,13 @@ body {
   </div>
   <div class="field">
     <label>Needle Smoothing</label>
-    <input type="range" id="inp-smooth" min="0.02" max="0.35" step="0.01" value="0.12">
-    <div class="rv" id="rv-smooth">0.12</div>
+    <input type="range" id="inp-smooth" min="0.02" max="0.35" step="0.01" value="0.10">
+    <div class="rv" id="rv-smooth">0.10</div>
   </div>
   <div class="field">
-    <label>Barrier Angle (±degrees)</label>
-    <input type="range" id="inp-barrier" min="10" max="90" step="1" value="30">
-    <div class="rv" id="rv-barrier">±30°</div>
+    <label>Arrival Radius (meters)</label>
+    <input type="range" id="inp-arrival" min="5" max="100" step="1" value="15">
+    <div class="rv" id="rv-arrival">15 m</div>
   </div>
   <div id="admin-btns">
     <button class="btn" id="btn-save">Save</button>
@@ -261,20 +327,20 @@ body {
     active: false,
     userLat: null,
     userLng: null,
-    prevLat: null,
-    prevLng: null,
-    deviceHeading: 0,
-    movementHeading: null,
-    hasOrientation: false,
+    compassHeading: 0,         // magnetometer heading (0-360)
+    hasCompass: false,
     targetLat: 40.748817,
     targetLng: -73.985428,
-    smoothing: 0.12,
-    barrier: 30,
-    displayAngle: 0,
+    smoothing: 0.10,
+    arrivalRadius: 15,         // meters
+    arrived: false,
+    displayAngle: 0,           // smoothed relative angle for radar dot
+    targetBearing: 0,          // absolute bearing to target
     distance: null,
     watchId: null,
-    headingOffset: 0,
-    sweep: 0
+    headingOffset: 0,          // manual calibration offset
+    sweep: 0,
+    lastCompassRaw: 0          // for calibration
   };
 
   /* ══════════════════════════════════════
@@ -282,64 +348,67 @@ body {
      ══════════════════════════════════════ */
   function loadSettings() {
     try {
-      var d = JSON.parse(localStorage.getItem('rnav'));
+      var d = JSON.parse(localStorage.getItem('rnav2'));
       if (d) {
         if (d.lat != null) S.targetLat = d.lat;
         if (d.lng != null) S.targetLng = d.lng;
         if (d.sm != null) S.smoothing = d.sm;
-        if (d.ba != null) S.barrier = d.ba;
+        if (d.ar != null) S.arrivalRadius = d.ar;
       }
     } catch(e) {}
   }
 
   function saveSettings() {
-    localStorage.setItem('rnav', JSON.stringify({
+    localStorage.setItem('rnav2', JSON.stringify({
       lat: S.targetLat, lng: S.targetLng,
-      sm: S.smoothing, ba: S.barrier
+      sm: S.smoothing, ar: S.arrivalRadius
     }));
   }
 
   /* ══════════════════════════════════════
      DOM
      ══════════════════════════════════════ */
-  var canvas   = document.getElementById('radar-canvas');
-  var ctx      = canvas.getContext('2d');
-  var distEl   = document.getElementById('distance-value');
-  var startBtn = document.getElementById('start-btn');
-  var recalBtn = document.getElementById('recalibrate-btn');
-  var statusEl = document.getElementById('status');
+  var canvas     = document.getElementById('radar-canvas');
+  var ctx        = canvas.getContext('2d');
+  var distEl     = document.getElementById('distance-value');
+  var bearingEl  = document.getElementById('bearing-value');
+  var startBtn   = document.getElementById('start-btn');
+  var recalBtn   = document.getElementById('recalibrate-btn');
+  var statusEl   = document.getElementById('status');
+  var arrivalEl  = document.getElementById('arrival-banner');
 
   // admin
-  var adminBtn   = document.getElementById('admin-btn');
-  var overlay    = document.getElementById('admin-overlay');
-  var btnSave    = document.getElementById('btn-save');
-  var btnClose   = document.getElementById('btn-close');
-  var inpLat     = document.getElementById('inp-lat');
-  var inpLng     = document.getElementById('inp-lng');
-  var inpSmooth  = document.getElementById('inp-smooth');
-  var rvSmooth   = document.getElementById('rv-smooth');
-  var inpBarrier = document.getElementById('inp-barrier');
-  var rvBarrier  = document.getElementById('rv-barrier');
+  var adminBtn     = document.getElementById('admin-btn');
+  var overlay      = document.getElementById('admin-overlay');
+  var btnSave      = document.getElementById('btn-save');
+  var btnClose     = document.getElementById('btn-close');
+  var inpLat       = document.getElementById('inp-lat');
+  var inpLng       = document.getElementById('inp-lng');
+  var inpSmooth    = document.getElementById('inp-smooth');
+  var rvSmooth     = document.getElementById('rv-smooth');
+  var inpArrival   = document.getElementById('inp-arrival');
+  var rvArrival    = document.getElementById('rv-arrival');
+  var compassStat  = document.getElementById('compass-status');
 
   /* ══════════════════════════════════════
      CANVAS SIZING
      ══════════════════════════════════════ */
-  var R, cx, cy, dotR;
+  var RAD, cx, cy, dotR;
 
   function sizeCanvas() {
     var maxW = window.innerWidth - 40;
-    var maxH = window.innerHeight - 300;
-    var sz = Math.max(220, Math.min(maxW, maxH, 420));
+    var maxH = window.innerHeight - 340;
+    var sz = Math.max(200, Math.min(maxW, maxH, 400));
     var dpr = window.devicePixelRatio || 1;
     canvas.width  = sz * dpr;
     canvas.height = sz * dpr;
     canvas.style.width  = sz + 'px';
     canvas.style.height = sz + 'px';
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    R    = (sz / 2) - 22;
+    RAD  = (sz / 2) - 20;
     cx   = sz / 2;
     cy   = sz / 2;
-    dotR = Math.max(7, sz * 0.022);
+    dotR = Math.max(7, sz * 0.024);
   }
 
   /* ══════════════════════════════════════
@@ -351,33 +420,32 @@ body {
     ctx.clearRect(0, 0, w, h);
 
     // ── concentric rings ──
-    var i;
-    for (i = 1; i <= 4; i++) {
+    for (var i = 1; i <= 4; i++) {
       ctx.beginPath();
-      ctx.arc(cx, cy, (R / 4) * i, 0, Math.PI * 2);
+      ctx.arc(cx, cy, (RAD / 4) * i, 0, Math.PI * 2);
       if (i === 4) {
-        ctx.strokeStyle = '#444';
+        ctx.strokeStyle = 'rgba(0,230,118,0.25)';
         ctx.lineWidth = 1.5;
       } else {
-        ctx.strokeStyle = '#222';
+        ctx.strokeStyle = 'rgba(0,230,118,0.06)';
         ctx.lineWidth = 0.5;
       }
       ctx.stroke();
     }
 
     // ── crosshairs ──
-    ctx.strokeStyle = '#1e1e1e';
+    ctx.strokeStyle = 'rgba(0,230,118,0.05)';
     ctx.lineWidth = 0.5;
     ctx.beginPath();
-    ctx.moveTo(cx, cy - R); ctx.lineTo(cx, cy + R);
+    ctx.moveTo(cx, cy - RAD); ctx.lineTo(cx, cy + RAD);
     ctx.stroke();
     ctx.beginPath();
-    ctx.moveTo(cx - R, cy); ctx.lineTo(cx + R, cy);
+    ctx.moveTo(cx - RAD, cy); ctx.lineTo(cx + RAD, cy);
     ctx.stroke();
 
     // ── diagonal crosshairs ──
-    var d45 = R * 0.707;
-    ctx.strokeStyle = '#191919';
+    var d45 = RAD * 0.707;
+    ctx.strokeStyle = 'rgba(0,230,118,0.03)';
     ctx.beginPath();
     ctx.moveTo(cx - d45, cy - d45); ctx.lineTo(cx + d45, cy + d45);
     ctx.stroke();
@@ -390,26 +458,26 @@ body {
       ctx.save();
       ctx.translate(cx, cy);
       ctx.rotate(S.sweep);
-      var sg = ctx.createLinearGradient(0, 0, R, 0);
-      sg.addColorStop(0, 'rgba(255,59,59,0.20)');
-      sg.addColorStop(1, 'rgba(255,59,59,0)');
+      var sg = ctx.createLinearGradient(0, 0, RAD, 0);
+      sg.addColorStop(0, 'rgba(0,230,118,0.18)');
+      sg.addColorStop(1, 'rgba(0,230,118,0)');
       ctx.strokeStyle = sg;
       ctx.lineWidth = 1;
       ctx.beginPath();
-      ctx.moveTo(0, 0); ctx.lineTo(R, 0);
+      ctx.moveTo(0, 0); ctx.lineTo(RAD, 0);
       ctx.stroke();
 
       // sweep trail
-      for (var t = 1; t <= 8; t++) {
-        ctx.rotate(-0.04);
-        var a = 0.15 - t * 0.016;
+      for (var t = 1; t <= 10; t++) {
+        ctx.rotate(-0.035);
+        var a = 0.12 - t * 0.011;
         if (a <= 0) break;
-        var tg = ctx.createLinearGradient(0, 0, R, 0);
-        tg.addColorStop(0, 'rgba(255,59,59,' + a + ')');
-        tg.addColorStop(1, 'rgba(255,59,59,0)');
+        var tg = ctx.createLinearGradient(0, 0, RAD, 0);
+        tg.addColorStop(0, 'rgba(0,230,118,' + a + ')');
+        tg.addColorStop(1, 'rgba(0,230,118,0)');
         ctx.strokeStyle = tg;
         ctx.beginPath();
-        ctx.moveTo(0, 0); ctx.lineTo(R, 0);
+        ctx.moveTo(0, 0); ctx.lineTo(RAD, 0);
         ctx.stroke();
       }
       ctx.restore();
@@ -420,49 +488,62 @@ body {
     ctx.arc(cx, cy, 4, 0, Math.PI * 2);
     ctx.fillStyle = '#fff';
     ctx.fill();
-    // small ring
     ctx.beginPath();
-    ctx.arc(cx, cy, 8, 0, Math.PI * 2);
-    ctx.strokeStyle = 'rgba(255,255,255,0.2)';
+    ctx.arc(cx, cy, 9, 0, Math.PI * 2);
+    ctx.strokeStyle = 'rgba(255,255,255,0.15)';
     ctx.lineWidth = 1;
     ctx.stroke();
 
-    // ── forward indicator (small triangle at top) ──
+    // ── forward indicator (small triangle at top edge) ──
     ctx.beginPath();
-    ctx.moveTo(cx, cy - R - 12);
-    ctx.lineTo(cx - 5, cy - R - 4);
-    ctx.lineTo(cx + 5, cy - R - 4);
+    ctx.moveTo(cx, cy - RAD - 13);
+    ctx.lineTo(cx - 5, cy - RAD - 5);
+    ctx.lineTo(cx + 5, cy - RAD - 5);
     ctx.closePath();
-    ctx.fillStyle = '#444';
+    ctx.fillStyle = 'rgba(0,230,118,0.5)';
     ctx.fill();
 
     // ── target dot ──
     if (S.active && S.userLat !== null) {
       var aRad = S.displayAngle * (Math.PI / 180);
-      var tx = cx + R * Math.sin(aRad);
-      var ty = cy - R * Math.cos(aRad);
+      // map distance to radar radius (closer = nearer to center)
+      var distFraction = 1;
+      if (S.distance !== null) {
+        // logarithmic scale: within ~20m maps to center, 1km+ maps to edge
+        var maxDist = 1000; // meters
+        var dMeters = S.distance * 1000;
+        if (dMeters < S.arrivalRadius) {
+          distFraction = 0.08;
+        } else {
+          distFraction = Math.min(1, 0.15 + 0.85 * (Math.log(dMeters) / Math.log(maxDist)));
+        }
+      }
+      var dotDist = RAD * distFraction;
+      var tx = cx + dotDist * Math.sin(aRad);
+      var ty = cy - dotDist * Math.cos(aRad);
 
       // outer glow
-      var glow = ctx.createRadialGradient(tx, ty, 0, tx, ty, dotR + 14);
-      glow.addColorStop(0, 'rgba(255,59,59,0.25)');
-      glow.addColorStop(1, 'rgba(255,59,59,0)');
+      var glow = ctx.createRadialGradient(tx, ty, 0, tx, ty, dotR + 16);
+      glow.addColorStop(0, S.arrived ? 'rgba(0,230,118,0.30)' : 'rgba(255,59,59,0.25)');
+      glow.addColorStop(1, 'rgba(0,0,0,0)');
       ctx.beginPath();
-      ctx.arc(tx, ty, dotR + 14, 0, Math.PI * 2);
+      ctx.arc(tx, ty, dotR + 16, 0, Math.PI * 2);
       ctx.fillStyle = glow;
       ctx.fill();
 
       // pulse ring
-      var pulse = 0.5 + 0.5 * Math.sin(Date.now() / 350);
+      var pulse = 0.5 + 0.5 * Math.sin(Date.now() / 300);
       ctx.beginPath();
-      ctx.arc(tx, ty, dotR + 3 + pulse * 5, 0, Math.PI * 2);
-      ctx.strokeStyle = 'rgba(255,59,59,' + (0.35 - pulse * 0.25).toFixed(2) + ')';
+      ctx.arc(tx, ty, dotR + 3 + pulse * 6, 0, Math.PI * 2);
+      var pulseColor = S.arrived ? 'rgba(0,230,118,' : 'rgba(255,59,59,';
+      ctx.strokeStyle = pulseColor + (0.35 - pulse * 0.25).toFixed(2) + ')';
       ctx.lineWidth = 1;
       ctx.stroke();
 
       // dot
       ctx.beginPath();
       ctx.arc(tx, ty, dotR, 0, Math.PI * 2);
-      ctx.fillStyle = '#ff3b3b';
+      ctx.fillStyle = S.arrived ? '#00e676' : '#ff3b3b';
       ctx.fill();
 
       // bright center
@@ -470,6 +551,17 @@ body {
       ctx.arc(tx, ty, dotR * 0.35, 0, Math.PI * 2);
       ctx.fillStyle = 'rgba(255,255,255,0.5)';
       ctx.fill();
+
+      // ── direction line from center to dot ──
+      ctx.beginPath();
+      ctx.moveTo(cx, cy);
+      ctx.lineTo(tx, ty);
+      var lineColor = S.arrived ? 'rgba(0,230,118,0.08)' : 'rgba(255,59,59,0.08)';
+      ctx.strokeStyle = lineColor;
+      ctx.lineWidth = 1;
+      ctx.setLineDash([4, 6]);
+      ctx.stroke();
+      ctx.setLineDash([]);
     }
   }
 
@@ -477,12 +569,12 @@ body {
      ANGLE MATH
      ══════════════════════════════════════ */
 
-  // Returns value in -180..180
-  function relAngle(target, device) {
-    return ((target - device + 540) % 360) - 180;
+  // relative angle in -180..180
+  function relAngle(targetBearing, compassHeading) {
+    return ((targetBearing - compassHeading + 540) % 360) - 180;
   }
 
-  // Shortest delta from → to, in -180..180
+  // shortest delta from → to, in -180..180
   function shortDelta(from, to) {
     var d = to - from;
     while (d > 180)  d -= 360;
@@ -499,55 +591,49 @@ body {
     var uPt = turf.point([S.userLng, S.userLat]);
     var tPt = turf.point([S.targetLng, S.targetLat]);
 
-    // distance (km)
+    // distance
     var dKm = turf.distance(uPt, tPt);
     S.distance = dKm;
+    var dMeters = dKm * 1000;
 
-    if (dKm < 1) {
-      distEl.textContent = Math.round(dKm * 1000) + ' m';
-    } else {
+    // format distance display
+    if (dMeters < 1) {
+      distEl.textContent = '< 1 m';
+    } else if (dKm < 1) {
+      distEl.textContent = Math.round(dMeters) + ' m';
+    } else if (dKm < 10) {
       distEl.textContent = dKm.toFixed(2) + ' km';
+    } else {
+      distEl.textContent = dKm.toFixed(1) + ' km';
     }
 
-    // target bearing (normalized 0-360)
+    // arrival check
+    var wasArrived = S.arrived;
+    S.arrived = dMeters <= S.arrivalRadius;
+    if (S.arrived && !wasArrived) {
+      arrivalEl.classList.add('show');
+    } else if (!S.arrived && wasArrived) {
+      arrivalEl.classList.remove('show');
+    }
+
+    // bearing to target (0-360)
     var tBear = turf.bearing(uPt, tPt);
     tBear = (tBear + 360) % 360;
+    S.targetBearing = tBear;
 
-    // relative angle (CRITICAL: wraps correctly across 0/360)
-    var rel = relAngle(tBear, S.deviceHeading);
+    // display bearing
+    bearingEl.textContent = Math.round(tBear) + '°';
 
-    // barrier-based smoothing
-    var absRel = Math.abs(rel);
-    var factor;
-    if (absRel <= S.barrier) {
-      // inside barrier → normal smooth (~0.5s)
-      factor = S.smoothing;
-    } else {
-      // outside barrier → heavy damp (~2s)
-      factor = S.smoothing * 0.12;
-    }
+    // relative angle (compass-based only)
+    var rel = relAngle(tBear, S.compassHeading);
 
     // smooth display angle
     var delta = shortDelta(S.displayAngle, rel);
-    S.displayAngle += delta * factor;
+    S.displayAngle += delta * S.smoothing;
 
     // clamp to -180..180
     if (S.displayAngle > 180)  S.displayAngle -= 360;
     if (S.displayAngle < -180) S.displayAngle += 360;
-  }
-
-  /* ══════════════════════════════════════
-     MOVEMENT HEADING
-     ══════════════════════════════════════ */
-  function updateMovementHeading() {
-    if (S.prevLat === null || S.userLat === null) return;
-    var p1 = turf.point([S.prevLng, S.prevLat]);
-    var p2 = turf.point([S.userLng, S.userLat]);
-    var dist = turf.distance(p1, p2) * 1000;
-    if (dist > 2) {
-      var mh = turf.bearing(p1, p2);
-      S.movementHeading = (mh + 360) % 360;
-    }
   }
 
   /* ══════════════════════════════════════
@@ -560,24 +646,16 @@ body {
     }
     S.watchId = navigator.geolocation.watchPosition(
       function(pos) {
-        S.prevLat = S.userLat;
-        S.prevLng = S.userLng;
         S.userLat = pos.coords.latitude;
         S.userLng = pos.coords.longitude;
-
-        updateMovementHeading();
-
-        // fallback: if no orientation sensor, use movement heading
-        if (!S.hasOrientation && S.movementHeading !== null) {
-          S.deviceHeading = S.movementHeading;
-        }
-
-        statusEl.textContent = 'GPS active · ±' + Math.round(pos.coords.accuracy) + 'm';
+        var acc = Math.round(pos.coords.accuracy);
+        var compassLabel = S.hasCompass ? 'compass active' : 'no compass';
+        statusEl.textContent = 'GPS ±' + acc + 'm · ' + compassLabel;
       },
       function(err) {
         statusEl.textContent = 'GPS error: ' + err.message;
       },
-      { enableHighAccuracy: true, maximumAge: 0, timeout: 5000 }
+      { enableHighAccuracy: true, maximumAge: 0, timeout: 8000 }
     );
   }
 
@@ -589,45 +667,63 @@ body {
   }
 
   /* ══════════════════════════════════════
-     DEVICE ORIENTATION
+     DEVICE ORIENTATION (COMPASS)
+     Magnetometer + gyroscope fusion
      ══════════════════════════════════════ */
-  function onOrientation(e) {
-    if (e.alpha === null) return;
-    S.hasOrientation = true;
 
-    var h;
-    if (e.webkitCompassHeading !== undefined) {
-      h = e.webkitCompassHeading;
-    } else {
-      h = (360 - e.alpha) % 360;
+  function onDeviceOrientation(e) {
+    var heading = null;
+
+    // iOS Safari: webkitCompassHeading gives true north heading
+    if (e.webkitCompassHeading !== undefined && e.webkitCompassHeading !== null) {
+      heading = e.webkitCompassHeading;
+    }
+    // Android / others: use e.alpha (magnetic north)
+    // alpha = 0 means device points to north, increases counterclockwise
+    // so compass heading = (360 - alpha) % 360
+    else if (e.alpha !== null && e.alpha !== undefined) {
+      // If absoluteOrientation event, e.absolute is true
+      heading = (360 - e.alpha) % 360;
     }
 
-    h = (h + S.headingOffset + 360) % 360;
-    S.deviceHeading = h;
+    if (heading === null) return;
+
+    S.hasCompass = true;
+    S.lastCompassRaw = heading;
+
+    // apply calibration offset
+    heading = (heading + S.headingOffset + 360) % 360;
+    S.compassHeading = heading;
   }
 
-  function startOrientation() {
+  // try absoluteorientationevent first (Chrome 93+), then fallback
+  function startCompass() {
+    // iOS permission request
     if (typeof DeviceOrientationEvent !== 'undefined' &&
         typeof DeviceOrientationEvent.requestPermission === 'function') {
       DeviceOrientationEvent.requestPermission()
         .then(function(r) {
           if (r === 'granted') {
-            window.addEventListener('deviceorientation', onOrientation, true);
+            window.addEventListener('deviceorientation', onDeviceOrientation, true);
+            window.addEventListener('deviceorientationabsolute', onDeviceOrientation, true);
           } else {
-            statusEl.textContent = 'Orientation permission denied';
+            statusEl.textContent = 'Compass permission denied';
           }
         })
         .catch(function() {
-          statusEl.textContent = 'Orientation error';
+          statusEl.textContent = 'Compass permission error';
         });
     } else {
-      window.addEventListener('deviceorientation', onOrientation, true);
+      // Android / desktop: listen to both events, absolute preferred
+      window.addEventListener('deviceorientationabsolute', onDeviceOrientation, true);
+      window.addEventListener('deviceorientation', onDeviceOrientation, true);
     }
   }
 
-  function stopOrientation() {
-    window.removeEventListener('deviceorientation', onOrientation, true);
-    S.hasOrientation = false;
+  function stopCompass() {
+    window.removeEventListener('deviceorientation', onDeviceOrientation, true);
+    window.removeEventListener('deviceorientationabsolute', onDeviceOrientation, true);
+    S.hasCompass = false;
   }
 
   /* ══════════════════════════════════════
@@ -636,7 +732,7 @@ body {
   function tick() {
     updateNav();
     if (S.active) {
-      S.sweep += 0.018;
+      S.sweep += 0.016;
       if (S.sweep > Math.PI * 2) S.sweep -= Math.PI * 2;
     }
     draw();
@@ -649,36 +745,41 @@ body {
   startBtn.addEventListener('click', function() {
     if (!S.active) {
       S.active = true;
+      S.arrived = false;
       S.displayAngle = 0;
-      startBtn.textContent = 'Stop Navigation';
+      arrivalEl.classList.remove('show');
+      startBtn.textContent = 'Stop';
       startBtn.classList.add('running');
       startGeo();
-      startOrientation();
-      statusEl.textContent = 'Acquiring GPS…';
+      startCompass();
+      statusEl.textContent = 'Acquiring GPS & compass…';
     } else {
       S.active = false;
       startBtn.textContent = 'Start Navigation';
       startBtn.classList.remove('running');
       stopGeo();
-      stopOrientation();
+      stopCompass();
       distEl.textContent = '---';
-      S.userLat = S.userLng = S.prevLat = S.prevLng = null;
-      S.movementHeading = null;
+      bearingEl.textContent = '---';
+      S.userLat = S.userLng = null;
+      S.arrived = false;
+      arrivalEl.classList.remove('show');
       statusEl.textContent = 'Navigation stopped';
     }
   });
 
   recalBtn.addEventListener('click', function() {
+    // Reset heading offset to zero the current compass reading
+    // This makes current facing direction = 0° (forward on radar)
     S.headingOffset = 0;
     S.displayAngle = 0;
-    if (S.movementHeading !== null && S.hasOrientation) {
-      var rawH = (360 - S.deviceHeading + S.headingOffset + 360) % 360;
-      S.headingOffset = S.movementHeading - rawH;
-    }
     statusEl.textContent = 'Recalibrated';
     setTimeout(function() {
-      if (S.active) statusEl.textContent = 'GPS active';
-    }, 1500);
+      if (S.active) {
+        var compassLabel = S.hasCompass ? 'compass active' : 'no compass';
+        statusEl.textContent = 'Recalibrated · ' + compassLabel;
+      }
+    }, 1200);
   });
 
   /* ══════════════════════════════════════
@@ -689,8 +790,11 @@ body {
     inpLng.value = S.targetLng;
     inpSmooth.value = S.smoothing;
     rvSmooth.textContent = S.smoothing.toFixed(2);
-    inpBarrier.value = S.barrier;
-    rvBarrier.textContent = '±' + S.barrier + '°';
+    inpArrival.value = S.arrivalRadius;
+    rvArrival.textContent = S.arrivalRadius + ' m';
+    compassStat.textContent = S.hasCompass
+      ? 'Compass: active (' + Math.round(S.lastCompassRaw) + '° raw)'
+      : 'Compass: not detected';
     overlay.classList.add('open');
   });
 
@@ -702,8 +806,8 @@ body {
     rvSmooth.textContent = parseFloat(this.value).toFixed(2);
   });
 
-  inpBarrier.addEventListener('input', function() {
-    rvBarrier.textContent = '±' + this.value + '°';
+  inpArrival.addEventListener('input', function() {
+    rvArrival.textContent = this.value + ' m';
   });
 
   btnSave.addEventListener('click', function() {
@@ -714,13 +818,16 @@ body {
       S.targetLng = ln;
     }
     S.smoothing = parseFloat(inpSmooth.value);
-    S.barrier   = parseInt(inpBarrier.value, 10);
+    S.arrivalRadius = parseInt(inpArrival.value, 10);
     saveSettings();
     overlay.classList.remove('open');
     statusEl.textContent = 'Settings saved';
     setTimeout(function() {
-      if (S.active) statusEl.textContent = 'GPS active';
-    }, 1500);
+      if (S.active) {
+        var compassLabel = S.hasCompass ? 'compass active' : 'no compass';
+        statusEl.textContent = 'GPS active · ' + compassLabel;
+      }
+    }, 1200);
   });
 
   /* ══════════════════════════════════════
