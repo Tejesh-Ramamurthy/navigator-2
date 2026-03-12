@@ -21,7 +21,7 @@ html, body {
 }
 
 body {
-  background: #0a0a0f;
+  background: #111;
   color: #fff;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
   display: flex;
@@ -37,8 +37,8 @@ body {
   top: 14px;
   right: 14px;
   background: transparent;
-  color: #444;
-  border: 1px solid #222;
+  color: #555;
+  border: 1px solid #333;
   padding: 7px 14px;
   border-radius: 14px;
   font-size: 11px;
@@ -49,31 +49,50 @@ body {
 }
 
 #admin-btn:active {
-  border-color: #555;
-  color: #888;
+  border-color: #666;
+  color: #999;
 }
 
 /* ── Distance Display ── */
 #distance-section {
-  margin-top: 50px;
+  margin-top: 54px;
   text-align: center;
 }
 
 #distance-section .label {
-  font-size: 10px;
-  color: #555;
+  font-size: 11px;
+  color: #666;
   text-transform: uppercase;
-  letter-spacing: 3px;
+  letter-spacing: 2.5px;
 }
 
 #distance-value {
-  font-size: 54px;
+  font-size: 52px;
   font-weight: 200;
   margin-top: 6px;
   font-variant-numeric: tabular-nums;
   line-height: 1;
-  min-height: 58px;
-  color: #e0e0e0;
+  min-height: 56px;
+}
+
+/* ── Calibration Notice ── */
+#calibration-notice {
+  display: none;
+  margin-top: 10px;
+  font-size: 12px;
+  color: #ff3b3b;
+  letter-spacing: 0.5px;
+  text-align: center;
+  animation: pulse-text 1.2s ease-in-out infinite;
+}
+
+#calibration-notice.show {
+  display: block;
+}
+
+@keyframes pulse-text {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
 }
 
 /* ── Radar ── */
@@ -85,43 +104,64 @@ body {
   justify-content: center;
 }
 
+#radar-container {
+  position: relative;
+}
+
 #radar-canvas {
   display: block;
 }
 
-/* ── Bearing Display ── */
-#bearing-section {
-  margin-top: 16px;
-  text-align: center;
+/* ── Target Dot (DOM element, lerped via JS) ── */
+#target-dot {
+  display: none;
+  position: absolute;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #ff3b3b;
+  box-shadow: 0 0 12px 3px rgba(255, 59, 59, 0.4),
+              0 0 24px 6px rgba(255, 59, 59, 0.15);
+  pointer-events: none;
+  z-index: 10;
+  transform: translate(-50%, -50%);
 }
 
-#bearing-section .label {
-  font-size: 10px;
-  color: #444;
-  text-transform: uppercase;
-  letter-spacing: 2px;
+#target-dot.show {
+  display: block;
 }
 
-#bearing-value {
-  font-size: 22px;
-  font-weight: 300;
-  margin-top: 3px;
-  font-variant-numeric: tabular-nums;
-  color: #777;
+/* Pulse ring on the dot */
+#target-dot::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 59, 59, 0.35);
+  transform: translate(-50%, -50%);
+  animation: dot-pulse 1.8s ease-out infinite;
+}
+
+@keyframes dot-pulse {
+  0% { width: 16px; height: 16px; opacity: 0.6; }
+  100% { width: 36px; height: 36px; opacity: 0; }
 }
 
 /* ── Controls ── */
 #controls {
-  margin-top: 28px;
+  margin-top: 32px;
   display: flex;
   gap: 14px;
 }
 
 .btn {
   background: transparent;
-  color: #aaa;
-  border: 1px solid #333;
-  padding: 13px 28px;
+  color: #ccc;
+  border: 1px solid #444;
+  padding: 13px 30px;
   border-radius: 26px;
   font-size: 13px;
   cursor: pointer;
@@ -130,12 +170,12 @@ body {
 }
 
 .btn:active {
-  background: rgba(255,255,255,0.04);
+  background: rgba(255, 255, 255, 0.06);
 }
 
 .btn.running {
-  border-color: #00e676;
-  color: #00e676;
+  border-color: #ff3b3b;
+  color: #ff3b3b;
 }
 
 /* ── Status ── */
@@ -143,32 +183,10 @@ body {
   position: fixed;
   bottom: 20px;
   font-size: 10px;
-  color: #2a2a2a;
+  color: #333;
   letter-spacing: 0.5px;
   text-align: center;
   padding: 0 20px;
-}
-
-/* ── Arrival Banner ── */
-#arrival-banner {
-  display: none;
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  padding: 12px 20px;
-  background: rgba(0,230,118,0.12);
-  border-bottom: 1px solid rgba(0,230,118,0.25);
-  text-align: center;
-  font-size: 14px;
-  color: #00e676;
-  font-weight: 400;
-  letter-spacing: 0.5px;
-  z-index: 40;
-}
-
-#arrival-banner.show {
-  display: block;
 }
 
 /* ── Admin Panel ── */
@@ -176,7 +194,7 @@ body {
   display: none;
   position: fixed;
   inset: 0;
-  background: rgba(5,5,10,0.96);
+  background: rgba(0, 0, 0, 0.94);
   z-index: 200;
   flex-direction: column;
   align-items: center;
@@ -192,7 +210,7 @@ body {
   font-size: 18px;
   font-weight: 300;
   margin-bottom: 28px;
-  color: #888;
+  color: #aaa;
   letter-spacing: 1px;
 }
 
@@ -205,7 +223,7 @@ body {
 .field label {
   display: block;
   font-size: 10px;
-  color: #555;
+  color: #666;
   text-transform: uppercase;
   letter-spacing: 1.5px;
   margin-bottom: 5px;
@@ -213,8 +231,8 @@ body {
 
 .field input[type="number"] {
   width: 100%;
-  background: #111118;
-  border: 1px solid #2a2a2a;
+  background: #1a1a1a;
+  border: 1px solid #333;
   color: #fff;
   padding: 11px 14px;
   border-radius: 8px;
@@ -224,18 +242,18 @@ body {
 }
 
 .field input[type="number"]:focus {
-  border-color: #444;
+  border-color: #555;
 }
 
 .field input[type="range"] {
   width: 100%;
-  accent-color: #00e676;
+  accent-color: #ff3b3b;
   margin-top: 2px;
 }
 
 .field .rv {
   font-size: 12px;
-  color: #666;
+  color: #777;
   margin-top: 3px;
   text-align: right;
 }
@@ -245,40 +263,24 @@ body {
   gap: 12px;
   margin-top: 12px;
 }
-
-#compass-status {
-  width: 100%;
-  max-width: 300px;
-  margin-bottom: 18px;
-  padding: 10px 14px;
-  border-radius: 8px;
-  background: #111118;
-  border: 1px solid #2a2a2a;
-  font-size: 11px;
-  color: #555;
-  text-align: center;
-  letter-spacing: 0.5px;
-}
 </style>
 </head>
 <body>
 
 <button id="admin-btn">Admin</button>
 
-<div id="arrival-banner">You have arrived</div>
-
 <div id="distance-section">
   <div class="label">Distance to Target</div>
   <div id="distance-value">---</div>
 </div>
 
-<div id="radar-wrap">
-  <canvas id="radar-canvas"></canvas>
-</div>
+<div id="calibration-notice">Calibrating compass…</div>
 
-<div id="bearing-section">
-  <div class="label">Bearing</div>
-  <div id="bearing-value">---</div>
+<div id="radar-wrap">
+  <div id="radar-container">
+    <canvas id="radar-canvas"></canvas>
+    <div id="target-dot"></div>
+  </div>
 </div>
 
 <div id="controls">
@@ -291,7 +293,6 @@ body {
 <!-- Admin Panel -->
 <div id="admin-overlay">
   <h2>Configuration</h2>
-  <div id="compass-status">Compass: checking…</div>
   <div class="field">
     <label>Target Latitude</label>
     <input type="number" id="inp-lat" step="0.000001" placeholder="40.748817">
@@ -301,14 +302,14 @@ body {
     <input type="number" id="inp-lng" step="0.000001" placeholder="-73.985428">
   </div>
   <div class="field">
-    <label>Needle Smoothing</label>
-    <input type="range" id="inp-smooth" min="0.02" max="0.35" step="0.01" value="0.10">
+    <label>Smoothing Factor (α)</label>
+    <input type="range" id="inp-smooth" min="0.02" max="0.5" step="0.01" value="0.1">
     <div class="rv" id="rv-smooth">0.10</div>
   </div>
   <div class="field">
-    <label>Arrival Radius (meters)</label>
-    <input type="range" id="inp-arrival" min="5" max="100" step="1" value="15">
-    <div class="rv" id="rv-arrival">15 m</div>
+    <label>Outlier Threshold (±degrees)</label>
+    <input type="range" id="inp-outlier" min="10" max="120" step="1" value="45">
+    <div class="rv" id="rv-outlier">±45°</div>
   </div>
   <div id="admin-btns">
     <button class="btn" id="btn-save">Save</button>
@@ -317,7 +318,7 @@ body {
 </div>
 
 <script>
-(function() {
+(function () {
   'use strict';
 
   /* ══════════════════════════════════════
@@ -325,22 +326,44 @@ body {
      ══════════════════════════════════════ */
   var S = {
     active: false,
+
+    // GPS
     userLat: null,
     userLng: null,
-    compassHeading: 0,         // magnetometer heading (0-360)
+    watchId: null,
+
+    // Compass
+    rawHeading: null,
+    previousHeading: null,
+    smoothedHeading: 0,
     hasCompass: false,
+
+    // Calibration warm-up
+    calibrating: false,
+    calibrationTimer: null,
+
+    // Target
     targetLat: 40.748817,
     targetLng: -73.985428,
-    smoothing: 0.10,
-    arrivalRadius: 15,         // meters
-    arrived: false,
-    displayAngle: 0,           // smoothed relative angle for radar dot
-    targetBearing: 0,          // absolute bearing to target
+
+    // Settings
+    smoothingFactor: 0.1,
+    outlierThreshold: 45,
+    lerpSpeed: 0.08,
+
+    // Computed
+    targetBearing: 0,
+    relativeAngle: 0,
     distance: null,
-    watchId: null,
-    headingOffset: 0,          // manual calibration offset
-    sweep: 0,
-    lastCompassRaw: 0          // for calibration
+
+    // Dot lerp position (pixel coords within radar-container)
+    currentDotX: 0,
+    currentDotY: 0,
+    targetDotX: 0,
+    targetDotY: 0,
+
+    // Radar sweep
+    sweep: 0
   };
 
   /* ══════════════════════════════════════
@@ -348,292 +371,256 @@ body {
      ══════════════════════════════════════ */
   function loadSettings() {
     try {
-      var d = JSON.parse(localStorage.getItem('rnav2'));
+      var d = JSON.parse(localStorage.getItem('rnav3'));
       if (d) {
         if (d.lat != null) S.targetLat = d.lat;
         if (d.lng != null) S.targetLng = d.lng;
-        if (d.sm != null) S.smoothing = d.sm;
-        if (d.ar != null) S.arrivalRadius = d.ar;
+        if (d.sf != null) S.smoothingFactor = d.sf;
+        if (d.ot != null) S.outlierThreshold = d.ot;
       }
-    } catch(e) {}
+    } catch (e) {}
   }
 
   function saveSettings() {
-    localStorage.setItem('rnav2', JSON.stringify({
-      lat: S.targetLat, lng: S.targetLng,
-      sm: S.smoothing, ar: S.arrivalRadius
+    localStorage.setItem('rnav3', JSON.stringify({
+      lat: S.targetLat,
+      lng: S.targetLng,
+      sf: S.smoothingFactor,
+      ot: S.outlierThreshold
     }));
   }
 
   /* ══════════════════════════════════════
-     DOM
+     DOM REFS
      ══════════════════════════════════════ */
   var canvas     = document.getElementById('radar-canvas');
   var ctx        = canvas.getContext('2d');
   var distEl     = document.getElementById('distance-value');
-  var bearingEl  = document.getElementById('bearing-value');
   var startBtn   = document.getElementById('start-btn');
   var recalBtn   = document.getElementById('recalibrate-btn');
   var statusEl   = document.getElementById('status');
-  var arrivalEl  = document.getElementById('arrival-banner');
+  var calNotice  = document.getElementById('calibration-notice');
+  var dotEl      = document.getElementById('target-dot');
+  var radarCont  = document.getElementById('radar-container');
 
-  // admin
-  var adminBtn     = document.getElementById('admin-btn');
-  var overlay      = document.getElementById('admin-overlay');
-  var btnSave      = document.getElementById('btn-save');
-  var btnClose     = document.getElementById('btn-close');
-  var inpLat       = document.getElementById('inp-lat');
-  var inpLng       = document.getElementById('inp-lng');
-  var inpSmooth    = document.getElementById('inp-smooth');
-  var rvSmooth     = document.getElementById('rv-smooth');
-  var inpArrival   = document.getElementById('inp-arrival');
-  var rvArrival    = document.getElementById('rv-arrival');
-  var compassStat  = document.getElementById('compass-status');
+  // Admin
+  var adminBtn   = document.getElementById('admin-btn');
+  var overlay    = document.getElementById('admin-overlay');
+  var btnSave    = document.getElementById('btn-save');
+  var btnClose   = document.getElementById('btn-close');
+  var inpLat     = document.getElementById('inp-lat');
+  var inpLng     = document.getElementById('inp-lng');
+  var inpSmooth  = document.getElementById('inp-smooth');
+  var rvSmooth   = document.getElementById('rv-smooth');
+  var inpOutlier = document.getElementById('inp-outlier');
+  var rvOutlier  = document.getElementById('rv-outlier');
 
   /* ══════════════════════════════════════
      CANVAS SIZING
      ══════════════════════════════════════ */
-  var RAD, cx, cy, dotR;
+  var RAD, CX, CY, canvasSize;
 
   function sizeCanvas() {
     var maxW = window.innerWidth - 40;
-    var maxH = window.innerHeight - 340;
-    var sz = Math.max(200, Math.min(maxW, maxH, 400));
+    var maxH = window.innerHeight - 320;
+    var sz = Math.max(220, Math.min(maxW, maxH, 420));
+    canvasSize = sz;
     var dpr = window.devicePixelRatio || 1;
-    canvas.width  = sz * dpr;
+
+    canvas.width = sz * dpr;
     canvas.height = sz * dpr;
-    canvas.style.width  = sz + 'px';
+    canvas.style.width = sz + 'px';
     canvas.style.height = sz + 'px';
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    RAD  = (sz / 2) - 20;
-    cx   = sz / 2;
-    cy   = sz / 2;
-    dotR = Math.max(7, sz * 0.024);
+
+    radarCont.style.width = sz + 'px';
+    radarCont.style.height = sz + 'px';
+
+    RAD = (sz / 2) - 22;
+    CX = sz / 2;
+    CY = sz / 2;
+
+    // Reset dot to center
+    S.currentDotX = CX;
+    S.currentDotY = CY;
+    S.targetDotX = CX;
+    S.targetDotY = CY;
   }
 
   /* ══════════════════════════════════════
-     DRAWING
+     DRAW RADAR (canvas — static elements + sweep)
      ══════════════════════════════════════ */
-  function draw() {
-    var w = parseFloat(canvas.style.width);
-    var h = parseFloat(canvas.style.height);
-    ctx.clearRect(0, 0, w, h);
+  function drawRadar() {
+    ctx.clearRect(0, 0, canvasSize, canvasSize);
 
-    // ── concentric rings ──
+    // ── Concentric rings ──
     for (var i = 1; i <= 4; i++) {
       ctx.beginPath();
-      ctx.arc(cx, cy, (RAD / 4) * i, 0, Math.PI * 2);
+      ctx.arc(CX, CY, (RAD / 4) * i, 0, Math.PI * 2);
       if (i === 4) {
-        ctx.strokeStyle = 'rgba(0,230,118,0.25)';
+        ctx.strokeStyle = '#444';
         ctx.lineWidth = 1.5;
       } else {
-        ctx.strokeStyle = 'rgba(0,230,118,0.06)';
+        ctx.strokeStyle = '#222';
         ctx.lineWidth = 0.5;
       }
       ctx.stroke();
     }
 
-    // ── crosshairs ──
-    ctx.strokeStyle = 'rgba(0,230,118,0.05)';
+    // ── Crosshairs ──
+    ctx.strokeStyle = '#1e1e1e';
     ctx.lineWidth = 0.5;
     ctx.beginPath();
-    ctx.moveTo(cx, cy - RAD); ctx.lineTo(cx, cy + RAD);
+    ctx.moveTo(CX, CY - RAD);
+    ctx.lineTo(CX, CY + RAD);
     ctx.stroke();
     ctx.beginPath();
-    ctx.moveTo(cx - RAD, cy); ctx.lineTo(cx + RAD, cy);
+    ctx.moveTo(CX - RAD, CY);
+    ctx.lineTo(CX + RAD, CY);
     ctx.stroke();
 
-    // ── diagonal crosshairs ──
+    // ── Diagonal crosshairs ──
     var d45 = RAD * 0.707;
-    ctx.strokeStyle = 'rgba(0,230,118,0.03)';
+    ctx.strokeStyle = '#191919';
     ctx.beginPath();
-    ctx.moveTo(cx - d45, cy - d45); ctx.lineTo(cx + d45, cy + d45);
+    ctx.moveTo(CX - d45, CY - d45);
+    ctx.lineTo(CX + d45, CY + d45);
     ctx.stroke();
     ctx.beginPath();
-    ctx.moveTo(cx + d45, cy - d45); ctx.lineTo(cx - d45, cy + d45);
+    ctx.moveTo(CX + d45, CY - d45);
+    ctx.lineTo(CX - d45, CY + d45);
     ctx.stroke();
 
-    // ── sweep line ──
+    // ── Sweep line ──
     if (S.active) {
       ctx.save();
-      ctx.translate(cx, cy);
+      ctx.translate(CX, CY);
       ctx.rotate(S.sweep);
+
       var sg = ctx.createLinearGradient(0, 0, RAD, 0);
-      sg.addColorStop(0, 'rgba(0,230,118,0.18)');
-      sg.addColorStop(1, 'rgba(0,230,118,0)');
+      sg.addColorStop(0, 'rgba(255,59,59,0.18)');
+      sg.addColorStop(1, 'rgba(255,59,59,0)');
       ctx.strokeStyle = sg;
       ctx.lineWidth = 1;
       ctx.beginPath();
-      ctx.moveTo(0, 0); ctx.lineTo(RAD, 0);
+      ctx.moveTo(0, 0);
+      ctx.lineTo(RAD, 0);
       ctx.stroke();
 
-      // sweep trail
-      for (var t = 1; t <= 10; t++) {
-        ctx.rotate(-0.035);
-        var a = 0.12 - t * 0.011;
+      // Sweep trail
+      for (var t = 1; t <= 8; t++) {
+        ctx.rotate(-0.04);
+        var a = 0.13 - t * 0.015;
         if (a <= 0) break;
         var tg = ctx.createLinearGradient(0, 0, RAD, 0);
-        tg.addColorStop(0, 'rgba(0,230,118,' + a + ')');
-        tg.addColorStop(1, 'rgba(0,230,118,0)');
+        tg.addColorStop(0, 'rgba(255,59,59,' + a + ')');
+        tg.addColorStop(1, 'rgba(255,59,59,0)');
         ctx.strokeStyle = tg;
         ctx.beginPath();
-        ctx.moveTo(0, 0); ctx.lineTo(RAD, 0);
+        ctx.moveTo(0, 0);
+        ctx.lineTo(RAD, 0);
         ctx.stroke();
       }
       ctx.restore();
     }
 
-    // ── center user marker ──
+    // ── Center user marker ──
     ctx.beginPath();
-    ctx.arc(cx, cy, 4, 0, Math.PI * 2);
+    ctx.arc(CX, CY, 4, 0, Math.PI * 2);
     ctx.fillStyle = '#fff';
     ctx.fill();
+
     ctx.beginPath();
-    ctx.arc(cx, cy, 9, 0, Math.PI * 2);
-    ctx.strokeStyle = 'rgba(255,255,255,0.15)';
+    ctx.arc(CX, CY, 8, 0, Math.PI * 2);
+    ctx.strokeStyle = 'rgba(255,255,255,0.2)';
     ctx.lineWidth = 1;
     ctx.stroke();
 
-    // ── forward indicator (small triangle at top edge) ──
+    // ── Forward indicator triangle ──
     ctx.beginPath();
-    ctx.moveTo(cx, cy - RAD - 13);
-    ctx.lineTo(cx - 5, cy - RAD - 5);
-    ctx.lineTo(cx + 5, cy - RAD - 5);
+    ctx.moveTo(CX, CY - RAD - 13);
+    ctx.lineTo(CX - 5, CY - RAD - 5);
+    ctx.lineTo(CX + 5, CY - RAD - 5);
     ctx.closePath();
-    ctx.fillStyle = 'rgba(0,230,118,0.5)';
+    ctx.fillStyle = '#444';
     ctx.fill();
-
-    // ── target dot ──
-    if (S.active && S.userLat !== null) {
-      var aRad = S.displayAngle * (Math.PI / 180);
-      // map distance to radar radius (closer = nearer to center)
-      var distFraction = 1;
-      if (S.distance !== null) {
-        // logarithmic scale: within ~20m maps to center, 1km+ maps to edge
-        var maxDist = 1000; // meters
-        var dMeters = S.distance * 1000;
-        if (dMeters < S.arrivalRadius) {
-          distFraction = 0.08;
-        } else {
-          distFraction = Math.min(1, 0.15 + 0.85 * (Math.log(dMeters) / Math.log(maxDist)));
-        }
-      }
-      var dotDist = RAD * distFraction;
-      var tx = cx + dotDist * Math.sin(aRad);
-      var ty = cy - dotDist * Math.cos(aRad);
-
-      // outer glow
-      var glow = ctx.createRadialGradient(tx, ty, 0, tx, ty, dotR + 16);
-      glow.addColorStop(0, S.arrived ? 'rgba(0,230,118,0.30)' : 'rgba(255,59,59,0.25)');
-      glow.addColorStop(1, 'rgba(0,0,0,0)');
-      ctx.beginPath();
-      ctx.arc(tx, ty, dotR + 16, 0, Math.PI * 2);
-      ctx.fillStyle = glow;
-      ctx.fill();
-
-      // pulse ring
-      var pulse = 0.5 + 0.5 * Math.sin(Date.now() / 300);
-      ctx.beginPath();
-      ctx.arc(tx, ty, dotR + 3 + pulse * 6, 0, Math.PI * 2);
-      var pulseColor = S.arrived ? 'rgba(0,230,118,' : 'rgba(255,59,59,';
-      ctx.strokeStyle = pulseColor + (0.35 - pulse * 0.25).toFixed(2) + ')';
-      ctx.lineWidth = 1;
-      ctx.stroke();
-
-      // dot
-      ctx.beginPath();
-      ctx.arc(tx, ty, dotR, 0, Math.PI * 2);
-      ctx.fillStyle = S.arrived ? '#00e676' : '#ff3b3b';
-      ctx.fill();
-
-      // bright center
-      ctx.beginPath();
-      ctx.arc(tx, ty, dotR * 0.35, 0, Math.PI * 2);
-      ctx.fillStyle = 'rgba(255,255,255,0.5)';
-      ctx.fill();
-
-      // ── direction line from center to dot ──
-      ctx.beginPath();
-      ctx.moveTo(cx, cy);
-      ctx.lineTo(tx, ty);
-      var lineColor = S.arrived ? 'rgba(0,230,118,0.08)' : 'rgba(255,59,59,0.08)';
-      ctx.strokeStyle = lineColor;
-      ctx.lineWidth = 1;
-      ctx.setLineDash([4, 6]);
-      ctx.stroke();
-      ctx.setLineDash([]);
-    }
   }
 
   /* ══════════════════════════════════════
-     ANGLE MATH
+     WRAPAROUND-SAFE ANGLE HELPERS
      ══════════════════════════════════════ */
 
-  // relative angle in -180..180
-  function relAngle(targetBearing, compassHeading) {
-    return ((targetBearing - compassHeading + 540) % 360) - 180;
+  // Returns value in -180..180
+  function wrapDelta(a, b) {
+    return ((a - b + 540) % 360) - 180;
   }
 
-  // shortest delta from → to, in -180..180
-  function shortDelta(from, to) {
-    var d = to - from;
-    while (d > 180)  d -= 360;
-    while (d < -180) d += 360;
-    return d;
+  /* ══════════════════════════════════════
+     COMPASS HEADING PROCESSING
+     ══════════════════════════════════════ */
+  function processHeading(rawDeg) {
+    // Normalize 0-360
+    rawDeg = (rawDeg + 360) % 360;
+
+    // ── Fix 1: Outlier rejection (wraparound-safe) ──
+    if (S.previousHeading !== null) {
+      var delta = wrapDelta(rawDeg, S.previousHeading);
+      if (Math.abs(delta) > S.outlierThreshold) {
+        // Reject this reading
+        return;
+      }
+    }
+    S.previousHeading = rawDeg;
+
+    // ── Fix 2: Low-pass filter ──
+    // Must handle wraparound for smoothing too
+    var smoothDelta = wrapDelta(rawDeg, S.smoothedHeading);
+    S.smoothedHeading = (S.smoothedHeading + S.smoothingFactor * smoothDelta + 360) % 360;
   }
 
   /* ══════════════════════════════════════
      NAVIGATION UPDATE
      ══════════════════════════════════════ */
-  function updateNav() {
-    if (!S.active || S.userLat === null) return;
+  function updateNavigation() {
+    if (!S.active || S.userLat === null || S.calibrating) return;
 
-    var uPt = turf.point([S.userLng, S.userLat]);
-    var tPt = turf.point([S.targetLng, S.targetLat]);
+    var userPt = turf.point([S.userLng, S.userLat]);
+    var targetPt = turf.point([S.targetLng, S.targetLat]);
 
-    // distance
-    var dKm = turf.distance(uPt, tPt);
+    // Distance
+    var dKm = turf.distance(userPt, targetPt);
     S.distance = dKm;
     var dMeters = dKm * 1000;
 
-    // format distance display
-    if (dMeters < 1) {
-      distEl.textContent = '< 1 m';
-    } else if (dKm < 1) {
+    if (dMeters < 1000) {
       distEl.textContent = Math.round(dMeters) + ' m';
-    } else if (dKm < 10) {
-      distEl.textContent = dKm.toFixed(2) + ' km';
     } else {
-      distEl.textContent = dKm.toFixed(1) + ' km';
+      distEl.textContent = dKm.toFixed(2) + ' km';
     }
 
-    // arrival check
-    var wasArrived = S.arrived;
-    S.arrived = dMeters <= S.arrivalRadius;
-    if (S.arrived && !wasArrived) {
-      arrivalEl.classList.add('show');
-    } else if (!S.arrived && wasArrived) {
-      arrivalEl.classList.remove('show');
-    }
-
-    // bearing to target (0-360)
-    var tBear = turf.bearing(uPt, tPt);
+    // Target bearing (0-360)
+    var tBear = turf.bearing(userPt, targetPt);
     tBear = (tBear + 360) % 360;
     S.targetBearing = tBear;
 
-    // display bearing
-    bearingEl.textContent = Math.round(tBear) + '°';
+    // Relative angle (wraparound-safe), -180 to +180
+    S.relativeAngle = wrapDelta(tBear, S.smoothedHeading);
 
-    // relative angle (compass-based only)
-    var rel = relAngle(tBear, S.compassHeading);
+    // Compute target dot pixel position on perimeter
+    var angleRad = S.relativeAngle * (Math.PI / 180);
+    S.targetDotX = CX + RAD * Math.sin(angleRad);
+    S.targetDotY = CY - RAD * Math.cos(angleRad);
+  }
 
-    // smooth display angle
-    var delta = shortDelta(S.displayAngle, rel);
-    S.displayAngle += delta * S.smoothing;
+  /* ══════════════════════════════════════
+     DOT LERP — Fix 3: Smooth the dot position
+     ══════════════════════════════════════ */
+  function lerpDot() {
+    S.currentDotX += S.lerpSpeed * (S.targetDotX - S.currentDotX);
+    S.currentDotY += S.lerpSpeed * (S.targetDotY - S.currentDotY);
 
-    // clamp to -180..180
-    if (S.displayAngle > 180)  S.displayAngle -= 360;
-    if (S.displayAngle < -180) S.displayAngle += 360;
+    dotEl.style.left = S.currentDotX + 'px';
+    dotEl.style.top = S.currentDotY + 'px';
   }
 
   /* ══════════════════════════════════════
@@ -645,17 +632,18 @@ body {
       return;
     }
     S.watchId = navigator.geolocation.watchPosition(
-      function(pos) {
+      function (pos) {
         S.userLat = pos.coords.latitude;
         S.userLng = pos.coords.longitude;
         var acc = Math.round(pos.coords.accuracy);
-        var compassLabel = S.hasCompass ? 'compass active' : 'no compass';
-        statusEl.textContent = 'GPS ±' + acc + 'm · ' + compassLabel;
+        if (!S.calibrating) {
+          statusEl.textContent = 'GPS ±' + acc + 'm' + (S.hasCompass ? ' · compass active' : '');
+        }
       },
-      function(err) {
+      function (err) {
         statusEl.textContent = 'GPS error: ' + err.message;
       },
-      { enableHighAccuracy: true, maximumAge: 0, timeout: 8000 }
+      { enableHighAccuracy: true, maximumAge: 0, timeout: 5000 }
     );
   }
 
@@ -668,53 +656,47 @@ body {
 
   /* ══════════════════════════════════════
      DEVICE ORIENTATION (COMPASS)
-     Magnetometer + gyroscope fusion
      ══════════════════════════════════════ */
-
   function onDeviceOrientation(e) {
     var heading = null;
 
-    // iOS Safari: webkitCompassHeading gives true north heading
+    // iOS: webkitCompassHeading gives true-north heading directly
     if (e.webkitCompassHeading !== undefined && e.webkitCompassHeading !== null) {
       heading = e.webkitCompassHeading;
     }
-    // Android / others: use e.alpha (magnetic north)
-    // alpha = 0 means device points to north, increases counterclockwise
-    // so compass heading = (360 - alpha) % 360
+    // Android / others: alpha is rotation around z-axis
+    // compass heading = (360 - alpha) % 360
     else if (e.alpha !== null && e.alpha !== undefined) {
-      // If absoluteOrientation event, e.absolute is true
       heading = (360 - e.alpha) % 360;
     }
 
     if (heading === null) return;
 
     S.hasCompass = true;
-    S.lastCompassRaw = heading;
+    S.rawHeading = heading;
 
-    // apply calibration offset
-    heading = (heading + S.headingOffset + 360) % 360;
-    S.compassHeading = heading;
+    // Process through outlier rejection + low-pass filter
+    processHeading(heading);
   }
 
-  // try absoluteorientationevent first (Chrome 93+), then fallback
   function startCompass() {
-    // iOS permission request
+    // iOS permission gate
     if (typeof DeviceOrientationEvent !== 'undefined' &&
         typeof DeviceOrientationEvent.requestPermission === 'function') {
       DeviceOrientationEvent.requestPermission()
-        .then(function(r) {
-          if (r === 'granted') {
+        .then(function (state) {
+          if (state === 'granted') {
             window.addEventListener('deviceorientation', onDeviceOrientation, true);
             window.addEventListener('deviceorientationabsolute', onDeviceOrientation, true);
           } else {
             statusEl.textContent = 'Compass permission denied';
           }
         })
-        .catch(function() {
+        .catch(function () {
           statusEl.textContent = 'Compass permission error';
         });
     } else {
-      // Android / desktop: listen to both events, absolute preferred
+      // Android / desktop: prefer absolute orientation
       window.addEventListener('deviceorientationabsolute', onDeviceOrientation, true);
       window.addEventListener('deviceorientation', onDeviceOrientation, true);
     }
@@ -727,107 +709,149 @@ body {
   }
 
   /* ══════════════════════════════════════
+     CALIBRATION WARM-UP — Fix 4
+     ══════════════════════════════════════ */
+  function beginCalibration() {
+    S.calibrating = true;
+    S.previousHeading = null;
+    calNotice.classList.add('show');
+    statusEl.textContent = 'Calibrating…';
+
+    // Reset dot to center
+    S.currentDotX = CX;
+    S.currentDotY = CY;
+    S.targetDotX = CX;
+    S.targetDotY = CY;
+
+    if (S.calibrationTimer) clearTimeout(S.calibrationTimer);
+
+    S.calibrationTimer = setTimeout(function () {
+      S.calibrating = false;
+      calNotice.classList.remove('show');
+      // Snap smoothedHeading to current raw heading for clean start
+      if (S.rawHeading !== null) {
+        S.smoothedHeading = S.rawHeading;
+        S.previousHeading = S.rawHeading;
+      }
+      statusEl.textContent = 'Navigation active';
+    }, 3000);
+  }
+
+  /* ══════════════════════════════════════
      ANIMATION LOOP
      ══════════════════════════════════════ */
   function tick() {
-    updateNav();
+    // Update navigation computations
+    updateNavigation();
+
+    // Lerp the dot toward computed position
+    if (S.active && S.userLat !== null && !S.calibrating) {
+      lerpDot();
+    }
+
+    // Advance sweep
     if (S.active) {
-      S.sweep += 0.016;
+      S.sweep += 0.018;
       if (S.sweep > Math.PI * 2) S.sweep -= Math.PI * 2;
     }
-    draw();
+
+    // Draw radar
+    drawRadar();
+
     requestAnimationFrame(tick);
   }
 
   /* ══════════════════════════════════════
      CONTROLS
      ══════════════════════════════════════ */
-  startBtn.addEventListener('click', function() {
+  startBtn.addEventListener('click', function () {
     if (!S.active) {
       S.active = true;
-      S.arrived = false;
-      S.displayAngle = 0;
-      arrivalEl.classList.remove('show');
-      startBtn.textContent = 'Stop';
+      S.smoothedHeading = 0;
+      S.previousHeading = null;
+      S.rawHeading = null;
+      startBtn.textContent = 'Stop Navigation';
       startBtn.classList.add('running');
+      dotEl.classList.add('show');
       startGeo();
       startCompass();
-      statusEl.textContent = 'Acquiring GPS & compass…';
+      beginCalibration();
     } else {
       S.active = false;
+      S.calibrating = false;
+      if (S.calibrationTimer) clearTimeout(S.calibrationTimer);
+      calNotice.classList.remove('show');
       startBtn.textContent = 'Start Navigation';
       startBtn.classList.remove('running');
+      dotEl.classList.remove('show');
       stopGeo();
       stopCompass();
       distEl.textContent = '---';
-      bearingEl.textContent = '---';
       S.userLat = S.userLng = null;
-      S.arrived = false;
-      arrivalEl.classList.remove('show');
+      S.distance = null;
       statusEl.textContent = 'Navigation stopped';
     }
   });
 
-  recalBtn.addEventListener('click', function() {
-    // Reset heading offset to zero the current compass reading
-    // This makes current facing direction = 0° (forward on radar)
-    S.headingOffset = 0;
-    S.displayAngle = 0;
-    statusEl.textContent = 'Recalibrated';
-    setTimeout(function() {
-      if (S.active) {
-        var compassLabel = S.hasCompass ? 'compass active' : 'no compass';
-        statusEl.textContent = 'Recalibrated · ' + compassLabel;
-      }
-    }, 1200);
+  recalBtn.addEventListener('click', function () {
+    if (!S.active) return;
+
+    // Reset smoothedHeading to current raw heading
+    if (S.rawHeading !== null) {
+      S.smoothedHeading = S.rawHeading;
+      S.previousHeading = S.rawHeading;
+    }
+
+    // Reset dot to center
+    S.currentDotX = CX;
+    S.currentDotY = CY;
+    S.targetDotX = CX;
+    S.targetDotY = CY;
+
+    // Restart warm-up
+    beginCalibration();
   });
 
   /* ══════════════════════════════════════
      ADMIN PANEL
      ══════════════════════════════════════ */
-  adminBtn.addEventListener('click', function() {
+  adminBtn.addEventListener('click', function () {
     inpLat.value = S.targetLat;
     inpLng.value = S.targetLng;
-    inpSmooth.value = S.smoothing;
-    rvSmooth.textContent = S.smoothing.toFixed(2);
-    inpArrival.value = S.arrivalRadius;
-    rvArrival.textContent = S.arrivalRadius + ' m';
-    compassStat.textContent = S.hasCompass
-      ? 'Compass: active (' + Math.round(S.lastCompassRaw) + '° raw)'
-      : 'Compass: not detected';
+    inpSmooth.value = S.smoothingFactor;
+    rvSmooth.textContent = S.smoothingFactor.toFixed(2);
+    inpOutlier.value = S.outlierThreshold;
+    rvOutlier.textContent = '±' + S.outlierThreshold + '°';
     overlay.classList.add('open');
   });
 
-  btnClose.addEventListener('click', function() {
+  btnClose.addEventListener('click', function () {
     overlay.classList.remove('open');
   });
 
-  inpSmooth.addEventListener('input', function() {
+  inpSmooth.addEventListener('input', function () {
     rvSmooth.textContent = parseFloat(this.value).toFixed(2);
   });
 
-  inpArrival.addEventListener('input', function() {
-    rvArrival.textContent = this.value + ' m';
+  inpOutlier.addEventListener('input', function () {
+    rvOutlier.textContent = '±' + this.value + '°';
   });
 
-  btnSave.addEventListener('click', function() {
+  btnSave.addEventListener('click', function () {
     var la = parseFloat(inpLat.value);
     var ln = parseFloat(inpLng.value);
     if (!isNaN(la) && !isNaN(ln)) {
       S.targetLat = la;
       S.targetLng = ln;
     }
-    S.smoothing = parseFloat(inpSmooth.value);
-    S.arrivalRadius = parseInt(inpArrival.value, 10);
+    S.smoothingFactor = parseFloat(inpSmooth.value);
+    S.outlierThreshold = parseInt(inpOutlier.value, 10);
     saveSettings();
     overlay.classList.remove('open');
     statusEl.textContent = 'Settings saved';
-    setTimeout(function() {
-      if (S.active) {
-        var compassLabel = S.hasCompass ? 'compass active' : 'no compass';
-        statusEl.textContent = 'GPS active · ' + compassLabel;
-      }
-    }, 1200);
+    setTimeout(function () {
+      if (S.active) statusEl.textContent = 'Navigation active';
+    }, 1500);
   });
 
   /* ══════════════════════════════════════
@@ -835,7 +859,9 @@ body {
      ══════════════════════════════════════ */
   loadSettings();
   sizeCanvas();
-  window.addEventListener('resize', sizeCanvas);
+  window.addEventListener('resize', function () {
+    sizeCanvas();
+  });
   tick();
 })();
 </script>
